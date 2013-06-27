@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<EntityDescriptor entityID="http://nohost/auth" xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
+    <IDPSSODescriptor WantAuthnRequestsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+        <KeyDescriptor use="signing">
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                <ds:X509Data>
+                    <ds:X509Certificate>
+MIICIzCCAYwCCQDstVErUn6MqTANBgkqhkiG9w0BAQUFADBWMQswCQYDVQQGEwJE
+RTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0
+cyBQdHkgTHRkMQ8wDQYDVQQDDAZub2hvc3QwHhcNMTMwNjEzMTMxNzA2WhcNMTQw
+NjEzMTMxNzA2WjBWMQswCQYDVQQGEwJERTETMBEGA1UECAwKU29tZS1TdGF0ZTEh
+MB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMQ8wDQYDVQQDDAZub2hv
+c3QwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAORNgUcBxb6I+fH4znspz5ah
+PT/Zt3oNXBuONwfYF3PZCBap70iAcdpHUWDQWlVCsT/eWOGrVPGI+joRYi2eJu52
+gXi/NU8ko68f0FP7M9BYUJvCXHz2ZRSEqKv4EawyGUdodMRuX5t1303JMvTvSDWf
+heYFVgnz7Q2jCe7OPe/7AgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAEZ8thNNueknb
+iBSTcA8AXvWLqV0oUCfFlK5eG+0MUhS2delRPVbXIW+wAadNm8q7UcG/fYQ/J/2E
+uSUTcaMlwe83eX0P5mCd4IW9vv25DJULRd6cDtSFr8XJpVllWdMSfDHdHb1nGA1d
+yAcQJG7uUi8rTpFPFWY4iGiPs92z9HU=
+                    </ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+        </KeyDescriptor>
+        <SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="http://nohost/auth/IDPSloRedirect/metaAlias/idp" ResponseLocation="http://nohost/auth/IDPSloRedirect/metaAlias/idp"/>
+        <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="http://nohost/auth/SSOPOST/metaAlias/idp"/>
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="http://nohost/auth/SSORedirect/metaAlias/idp"/>
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="http://nohost/auth/SSOSoap/metaAlias/idp"/>
+    </IDPSSODescriptor>
+</EntityDescriptor>

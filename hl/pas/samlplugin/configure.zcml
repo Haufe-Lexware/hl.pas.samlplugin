@@ -1,0 +1,26 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:five="http://namespaces.zope.org/five"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:cmf="http://namespaces.zope.org/cmf"
+    xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
+    i18n_domain="hl.pas.samlplugin">
+
+  <five:registerPackage package="." initialize=".initialize" />
+  <include package=".browser" />
+
+  <subscriber handler=".plugin.registerSAMLLogoutResponder" />
+  <subscriber handler=".plugin.registerSAMLAttributeProvider" />
+  <subscriber handler=".plugin.registerSAMLSessionChecker" />
+
+  <cmf:registerDirectory name="auth"/> 
+
+  <genericsetup:registerProfile
+    name="hl.pas.samlplugin"
+    title="SAMLPlugin"
+    directory="profiles/default"
+    description='Extension profile for hl.pas.samlplugin package'
+    provides="Products.GenericSetup.interfaces.EXTENSION"
+    />
+
+</configure>

@@ -1,0 +1,14 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:five="http://namespaces.zope.org/five"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    i18n_domain="hl.pas.samlplugin">
+
+  <browser:page
+    for="*"
+    name="auth"
+    class=".views.LoginView"
+    permission="zope2.View"
+    />
+
+</configure>

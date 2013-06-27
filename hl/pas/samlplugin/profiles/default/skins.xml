@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<object name="portal_skins" meta_type="CMF Skins Tool" allow_any="False"
+   cookie_persistence="False" default_skin="Basic"
+   request_varname="portal_skin">
+   
+    <object name="hl.pas.samlplugin-auth"
+        meta_type="Filesystem Directory View"
+        directory="hl.pas.samlplugin:skins/auth"/>
+    
+    <skin-path name="Basic">
+        <layer name="hl.pas.samlplugin-auth"  insert-before="zpt_content"/>
+     </skin-path>
+</object>
+
