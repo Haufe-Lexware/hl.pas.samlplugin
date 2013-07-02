@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 def read(*rnames):
     return open(os.path.join(os.path.dirname(__file__), *rnames)).read()
 
-version = '0.1'
+version = '0.2dev'
 
 long_description = (
     read('README.rst')
@@ -38,8 +38,8 @@ setup(name='hl.pas.samlplugin',
         'License :: OSI Approved :: GNU General Public License (GPL)',
         ],
       keywords='',
-      author='',
-      author_email='',
+      author='Thomas Schorr',
+      author_email='thomas.schorr@haufe-lexware.com',
       url='https://github.com/Haufe-Lexware/hl.pas.samlplugin',
       license='GPL',
       packages=find_packages(exclude=['ez_setup']),
