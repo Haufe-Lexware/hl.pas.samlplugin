@@ -63,7 +63,7 @@ class SAML2Plugin(BasePlugin):
     session_lock_key = '_saml2_lock'
     session_sessid = '_saml2_sessid'
     session_user_properties = '_saml2_session_user_properties'
-
+    _v_config = None
 
     # ZMI properties
     saml2_idp_configfile = '%s/idp.xml' % os.getcwd()
@@ -124,9 +124,7 @@ class SAML2Plugin(BasePlugin):
         self.title = title
 
     def _saml2_config(self):
-        try:
-            return self._v_config
-        except AttributeError:
+        if self._v_config is None:
             sp_config = self._saml2_config_template()
             sp_config['metadata']['local'] = [self.saml2_idp_configfile]
             sp_config['entityid'] = self.saml2_sp_entityid
@@ -139,9 +137,15 @@ class SAML2Plugin(BasePlugin):
             config = SPConfig()
             conf=sp_config.copy()
             config.load(conf)
-            self._v_config = config
+            self.__class__._v_config = config
         return self._v_config
 
+    def _setPropValue(self, id, value):
+        """
+        override from PropertyManager to invalidate config cache
+        """
+        super(SAML2Plugin, self)._setPropValue(id, value)
+        self.__class__._v_config = None
 
     security.declarePrivate('extractCredentials')
     def extractCredentials(self, request):
