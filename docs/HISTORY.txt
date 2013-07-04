@@ -1,7 +1,11 @@
 Changelog
 =========
 
-0.4dev (4.7.2013)
+0.5dev (unreleased)
+-------------------
+
+
+0.4 (4.7.2013)
 -------------------
 
 - improved config caching
