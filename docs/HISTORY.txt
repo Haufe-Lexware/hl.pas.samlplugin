@@ -1,10 +1,11 @@
 Changelog
 =========
 
-0.4dev (unreleased)
+0.4dev (4.7.2013)
 -------------------
 
-- ...
+- improved config caching
+- add sample data for unittests
 
 0.3 (2.7.2013)
 -------------------
