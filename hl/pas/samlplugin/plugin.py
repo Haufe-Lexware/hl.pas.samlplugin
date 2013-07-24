@@ -137,7 +137,7 @@ class SAML2Plugin(BasePlugin):
             config = SPConfig()
             conf=sp_config.copy()
             config.load(conf)
-            self.__class__._v_config = config
+            self._v_config = config
         return self._v_config
 
     def _setPropValue(self, id, value):
@@ -145,7 +145,7 @@ class SAML2Plugin(BasePlugin):
         override from PropertyManager to invalidate config cache
         """
         super(SAML2Plugin, self)._setPropValue(id, value)
-        self.__class__._v_config = None
+        self._v_config = None
 
     security.declarePrivate('extractCredentials')
     def extractCredentials(self, request):
