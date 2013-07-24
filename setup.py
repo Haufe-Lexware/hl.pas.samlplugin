@@ -28,7 +28,7 @@ tests_require = ['zope.testing']
 
 setup(name='hl.pas.samlplugin',
       version=version,
-      description="",
+      description="SAML2 authentication for Zope",
       long_description=long_description,
       # Get more strings from
       # http://pypi.python.org/pypi?:action=list_classifiers
