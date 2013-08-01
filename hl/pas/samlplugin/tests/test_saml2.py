@@ -10,23 +10,22 @@ from cStringIO import StringIO
 from UserDict import UserDict
 from ZPublisher.HTTPRequest import HTTPRequest
 from ZPublisher.HTTPResponse import HTTPResponse
-from ZTUtils import make_query
 from zope.interface.verify import verifyObject
 from saml2.saml import Issuer, Assertion
 from saml2.saml import Subject, NameID, SubjectConfirmation, SubjectConfirmationData
 from saml2.saml import Conditions, AudienceRestriction, Audience, OneTimeUse
 from saml2.saml import AuthnStatement, AuthnContext, AuthnContextClassRef
 from saml2.saml import attribute_statement_from_string
-from saml2.saml import NAMEID_FORMAT_TRANSIENT, SUBJECT_CONFIRMATION_METHOD_BEARER
+from saml2.saml import NAMEID_FORMAT_TRANSIENT, SCM_BEARER
 from saml2.saml import NAMEID_FORMAT_ENTITY
 from saml2.samlp import Response, Status, StatusCode
 from saml2.samlp import STATUS_SUCCESS
 from saml2.samlp import authn_request_from_string, logout_request_from_string, logout_response_from_string
-from saml2.sigver import pre_signature_part, SecurityContext
+from saml2.sigver import pre_signature_part, SecurityContext, CryptoBackendXmlSec1
 from saml2.s_utils import decode_base64_and_inflate, deflate_and_base64_encode
 from hl.pas.samlplugin.interfaces import ISAMLLogoutHandler, ISAMLAttributeProvider, ISAMLSessionCheck
 
-from hl.pas.samlplugin.plugin import SAML2Plugin 
+from hl.pas.samlplugin.plugin import SAML2Plugin
 
 path = os.path.dirname(__file__)
 
@@ -152,7 +151,7 @@ class SAML2PluginTests(unittest.TestCase):
         subject_confirmation_data = SubjectConfirmationData(not_on_or_after=not_on_or_after,
                                                             in_response_to=authn_request_id,
                                                             recipient='http://nohost/')
-        subject_confirmation = SubjectConfirmation(method=SUBJECT_CONFIRMATION_METHOD_BEARER,
+        subject_confirmation = SubjectConfirmation(method=SCM_BEARER,
                                                    subject_confirmation_data=subject_confirmation_data)
         subject = Subject(name_id=NameID(text='AABVSVesMLYDiHtowyX4MDu6UopU', format=NAMEID_FORMAT_TRANSIENT),
                           subject_confirmation=subject_confirmation)
@@ -191,9 +190,9 @@ class SAML2PluginTests(unittest.TestCase):
     def sign_response(self, response):
         response = '%s' % response
         # Sign assertion in the response
-        xmlsec = os.environ.get('SAML2_XMLSEC', '/usr/bin/xmlsec1')
+        xmlsec = CryptoBackendXmlSec1(os.environ.get('SAML2_XMLSEC', '/usr/bin/xmlsec1'))
         seccont = SecurityContext(xmlsec, key_file=os.path.join(path, 'data', 'test.key'))
-        signed_response = seccont.sign_statement_using_xmlsec(response, "Response")
+        signed_response = seccont.sign_statement(response, 'urn:oasis:names:tc:SAML:2.0:protocol:Response')
         return signed_response
 
     

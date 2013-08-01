@@ -1,12 +1,14 @@
+import logging
 from saml2.client import Saml2Client as BaseClient
 from saml2.s_utils import sid, decode_base64_and_inflate
-from saml2.response import response_factory, LogoutResponse, AuthnResponse
 from saml2 import saml, samlp, class_name, VERSION
 from saml2.time_util import instant
 from saml2.sigver import pre_signature_part, signed_instance_factory
-from saml2.binding import http_redirect_message, http_post_message
+from saml2.pack import http_redirect_message
+from saml2.mdstore import destinations
 from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST, BINDING_PAOS
 
+logger = logging.getLogger(__name__)
 
 
 class Saml2Client(BaseClient):
@@ -67,7 +69,7 @@ class Saml2Client(BaseClient):
                 pass
 
         if sign is None:
-            sign = self.authn_requests_signed_default
+            sign =  self.authn_requests_signed
 
         if sign:
             request.signature = pre_signature_part(request.id,
@@ -77,13 +79,9 @@ class Saml2Client(BaseClient):
             to_sign = []
 
         request.name_id_policy = name_id_policy
-        request.issuer = self.issuer(spentityid)
+        request.issuer = self._issuer(spentityid)
 
-        if log is None:
-            log = self.logger
-
-        if log:
-            log.info("REQUEST: %s" % request)
+        logger.info("REQUEST: %s" % request)
 
         return signed_instance_factory(request, self.sec, to_sign)
 
@@ -103,7 +101,7 @@ class Saml2Client(BaseClient):
         :param binding: The binding to use, default = HTTP POST
         :return: An AuthnRequest instance
         """
-        spentityid = self._entityid()
+        spentityid = self.config.entityid
         if service_url_binding is None:
             service_url = self.service_url(binding)
         else:
@@ -115,13 +113,9 @@ class Saml2Client(BaseClient):
             my_name = self._my_name()
 
 
-        if log is None:
-            log = self.logger
-
-        if log:
-            log.info("spentityid: %s" % spentityid)
-            log.info("service_url: %s" % service_url)
-            log.info("my_name: %s" % my_name)
+        logger.info("spentityid: %s" % spentityid)
+        logger.info("service_url: %s" % service_url)
+        logger.info("my_name: %s" % my_name)
 
         return self.authn_request(session_id, location, service_url,
                                   spentityid, my_name, vorg, scoping, log,
@@ -143,97 +137,23 @@ class Saml2Client(BaseClient):
         :param sign: Whether the request should be signed or not.
         :return: AuthnRequest response
         """
-        location = self._sso_location(entityid, binding=binding)
+        destination = self._sso_location(entityid, binding=binding)
         session_id = sid()
 
-        _req_str = "%s" % self.authn(location, session_id, vorg, scoping, log,
+        _req_str = "%s" % self.authn(destination, session_id, vorg, scoping, log,
                                        sign, **kwargs)
 
-        if log:
-            log.info("AuthNReq: %s" % _req_str)
+        logger.info("AuthNReq: %s" % _req_str)
 
-        if binding == BINDING_HTTP_POST:
-            # No valid ticket; Send a form to the client
-            # THIS IS NOT TO BE USED RIGHT NOW
-            if log:
-                log.info("HTTP POST")
-            (head, response) = http_post_message(_req_str, location,
-                                                    relay_state)
-        elif binding == BINDING_HTTP_REDIRECT:
-            if log:
-                log.info("HTTP REDIRECT")
-            (head, _body) = http_redirect_message(_req_str, location,
-                                                    relay_state)
-            response = head[0]
-        else:
-            raise Exception("Unkown binding type: %s" % binding)
-        return session_id, response
-
-
-    def response(self, post, outstanding, log=None, decode=True,
-                 asynchop=True):
-        """ Deal with an AuthnResponse or LogoutResponse
-        
-        :param post: The reply as a dictionary
-        :param outstanding: A dictionary with session IDs as keys and
-            the original web request from the user before redirection
-            as values.
-        :param log: where loggin should go.
-        :param decode: Whether the response is Base64 encoded or not
-        :param asynchop: Whether the response was return over a asynchronous
-            connection. SOAP for instance is synchronous
-        :return: An response.AuthnResponse or response.LogoutResponse instance
-        """
-        # If the request contains a samlResponse, try to validate it
-        try:
-            saml_response = post['SAMLResponse']
-        except KeyError:
-            return None
-
-        try:
-            _ = self.config.entityid
-        except KeyError:
-            raise Exception("Missing entity_id specification")
-
-        if log is None:
-            log = self.logger
-
-        reply_addr = self.service_url()
-
-        resp = None
-        if saml_response:
-            try:
-                # fix bug in base class: use .value on MiniFieldStorage instance
-                resp = response_factory(saml_response.value, self.config,
-                                        reply_addr, outstanding, log,
-                                        debug=self.debug, decode=decode,
-                                        asynchop=asynchop,
-                                        allow_unsolicited=self.allow_unsolicited)
-            except Exception, exc:
-                if log:
-                    log.error("%s" % exc)
-                return None
-
-            if self.debug:
-                if log:
-                    log.info(">> %s", resp)
-            resp = resp.verify()
-            if isinstance(resp, AuthnResponse):
-                self.users.add_information_about_person(resp.session_info())
-                if log:
-                    log.error("--- ADDED person info ----")
-            elif isinstance(resp, LogoutResponse):
-                self.handle_logout_response(resp, log)
-            elif log:
-                log.error("Other response type: %s" % class_name(resp))
-        return resp
+        info = self.apply_binding(binding, _req_str, destination, relay_state)
+        return session_id, info
 
 
     def make_logout_response(self, idp_entity_id, request_id,
                              status_code, binding=BINDING_HTTP_REDIRECT):
         """ 
-        XXX Work around an Atlantik bug - Atlantik wants an explicit closing tag on 
-        StatusCode. XXX
+        XXX There were issues with an explicit closing tag on 
+        StatusCode. Check wether we still need this. XXX
         Constructs a LogoutResponse
 
         :param idp_entity_id: The entityid of the IdP that want to do the
@@ -243,8 +163,10 @@ class Saml2Client(BaseClient):
         :param binding: The type of binding that will be used for the response
         :return: A LogoutResponse instance
         """
+        srvs = self.metadata.single_logout_service(idp_entity_id, binding, "idpsso")
 
-        destination = self.config.single_logout_services(idp_entity_id, binding)[0]
+        destination = destinations(srvs)[0]
+        logger.info("destination to provider: %s" % destination)
 
         status = samlp.Status(
             status_code=samlp.StatusCode(value=status_code, text='\n'),
@@ -256,7 +178,8 @@ class Saml2Client(BaseClient):
             version=VERSION,
             issue_instant=instant(),
             destination=destination,
-            issuer=self.issuer(),
+            issuer=saml.Issuer(text=self.config.entityid,
+                                format=saml.NAMEID_FORMAT_ENTITY),
             in_response_to=request_id,
             status=status,
             )
@@ -271,9 +194,7 @@ class Saml2Client(BaseClient):
         :param subject_id: the id of the current logged user
         :return: a tuple with a list of header tuples (presently only location)
         """
-        headers = []
-        if log is None:
-            log = self.logger
+        msg = {}
 
         try:
             saml_request = get['SAMLRequest']
@@ -282,10 +203,9 @@ class Saml2Client(BaseClient):
 
         if saml_request:
             xml = decode_base64_and_inflate(saml_request)
-            log.info('logout request: %s' % xml)
+            logger.info('logout request: %s' % xml)
             request = samlp.logout_request_from_string(xml)
-            if self.debug and log:
-                log.info(request)
+            logger.debug(request)
 
             if request.session_index[0].text == session_index:
                 status = samlp.STATUS_SUCCESS
@@ -297,16 +217,15 @@ class Saml2Client(BaseClient):
                                                         request.id,
                                                         status)
 
-            if log:
-                log.info("RESPONSE: {0:>s}".format(response))
+            logger.info("RESPONSE: {0:>s}".format(response))
 
             if 'RelayState' in get:
                 rstate = get['RelayState']
             else:
                 rstate = ""
-            (headers, _body) = http_redirect_message(str(response),
-                                                    destination,
-                                                    rstate, 'SAMLResponse')
+            msg = http_redirect_message(str(response),
+                                        destination,
+                                        rstate, 'SAMLResponse')
 
-        return headers
+        return msg
 

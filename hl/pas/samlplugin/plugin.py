@@ -19,12 +19,12 @@ from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 from saml2.config import SPConfig
 from saml2 import saml, samlp
 from saml2.sigver import signed_instance_factory
-from saml2.binding import http_redirect_message
-from saml2 import BINDING_HTTP_REDIRECT
+from saml2.pack import http_redirect_message
+from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
 from saml2.saml import NAME_FORMAT_URI
+from saml2.mdstore import destinations
 from client import Saml2Client
 from interfaces import ISAMLLogoutHandler, ISAMLAttributeProvider, ISAMLSessionCheck
-
 
 logger = logging.getLogger('hl.pas.samlplugin')
 
@@ -105,7 +105,7 @@ class SAML2Plugin(BasePlugin):
                 "debug" : 1,
                 "key_file" : "",
                 "cert_file" : "",
-                "accepted_time_diff":'0',
+                "accepted_time_diff":0,
                 "xmlsec_binary" : None,
                 "name_form": NAME_FORMAT_URI
                 }
@@ -162,7 +162,7 @@ class SAML2Plugin(BasePlugin):
             return {'login': session[self.session_login_key], 'ssiauth':True}
         creds={}
         config = self._saml2_config()
-        entityid = config.metadata.entity.keys()[0]
+        entityid = config.metadata.keys()[0]
         sp_url = self.saml2_sp_url
         actual_url = request.get("ACTUAL_URL", '')
         if not actual_url.startswith(sp_url):
@@ -177,8 +177,10 @@ class SAML2Plugin(BasePlugin):
             (sid, result) = scl.authenticate(entityid, binding=BINDING_HTTP_REDIRECT, is_passive='true')
             session.set(self.session_sessid, {sid:''})
             session.set(self.session_storedurl_key, actual_url_with_query)
-            request.response.setHeader(result[0], result[1])
-            request.response.redirect(result[1])
+            headers = dict(result['headers'])
+            for k, v in headers.items():
+                request.response.setHeader(k, v)
+            request.response.redirect(headers['Location'], lock=1)
         # Idp response
         if 'SAMLResponse' in request.form and actual_url.strip('/') == sp_url.strip('/'):
             post_env = request.environ.copy()
@@ -197,19 +199,19 @@ class SAML2Plugin(BasePlugin):
             request.response.redirect(storedurl)
             session.set(self.session_auth_key, True)
             try:
-                session_info = scl.response(post, session.get(self.session_sessid, {}), log=logger)
+                session_info = scl.parse_authn_request_response(post['SAMLResponse'].value, BINDING_HTTP_POST, session.get(self.session_sessid, {}))
             except:
                 session.set(self.session_auth_key, False)
                 # Saml2 auth failed. Do not ask again.
                 return None
             ava = session_info.ava.copy()
-            login = ava[self.saml2_login_attribute][0] # whats in 'login' is controlled by the saml2_login_attribute property
+            login = ava[self.saml2_login_attribute.lower()][0] # whats in 'login' is controlled by the saml2_login_attribute property
             creds['login'] = login
             creds['ssiauth'] = True
-            session.set(self.session_user_properties, PersistentMapping(dict([(key, ava[key][0]) for key in self.saml2_user_properties])))
+            session.set(self.session_user_properties, PersistentMapping(dict([(key, ava[key.lower()][0]) for key in self.saml2_user_properties])))
             session.set(self.session_login_key, login)
             # store relevant information for Single Logout in session
-            session.set(self.session_samluid_key, scl.users.subjects()[0])
+            session.set(self.session_samluid_key, scl.users.subjects()[0].text)
             session.set(self.session_samlsessionindex_key, session_info.assertion.authn_statement[0].session_index)
         return creds
 
@@ -277,14 +279,16 @@ class SAML2Plugin(BasePlugin):
         logger.info('REFERER: %s' % request.HTTP_REFERER)
         session.set(self.session_storedurl_key, request.HTTP_REFERER)
         config = self._saml2_config()
-        entityid = config.metadata.entity.keys()[0]
+        entityid = config.metadata.keys()[0]
         # Initiate challenge
         scl = Saml2Client(config)
         # if we have an existing SSI session, continue in extractCredentials, otherwise redirect to SAML2 login
         (sid, result) = scl.authenticate(entityid, binding=BINDING_HTTP_REDIRECT)
         session.set(self.session_sessid, {sid:''})
-        request.response.setHeader(result[0], result[1])
-        request.response.redirect(result[1], lock=1)
+        headers = dict(result['headers'])
+        for k, v in headers.items():
+            request.response.setHeader(k, v)
+        request.response.redirect(headers['Location'], lock=1)
         return True
 
     security.declareProtected(view, 'checksession')
@@ -306,7 +310,7 @@ class SAML2Plugin(BasePlugin):
         config = self._saml2_config()
         scl = Saml2Client(config)
         samluid = session.get(self.session_samluid_key, '')
-        entityid = config.metadata.entity.keys()[0]
+        entityid = config.metadata.keys()[0]
         sp_url = self.saml2_sp_url
         actual_url = request.get("ACTUAL_URL", '')
         if not actual_url.startswith(sp_url):
@@ -314,18 +318,20 @@ class SAML2Plugin(BasePlugin):
             return None
         session.set(self.session_storedurl_key, request.URL1)
         # we cannot simply call global_logout on the client since it doesn't know about our user...
-        destination = scl.config.single_logout_services(entityid, BINDING_HTTP_REDIRECT)[0]
-        samlrequest = scl.construct_logout_request(samluid, destination, entityid)
-        samlrequest.name_id = saml.NameID(text=samluid)
+        srvs = scl.metadata.single_logout_service(entityid, BINDING_HTTP_REDIRECT, "idpsso")
+        destination = destinations(srvs)[0]
+        samlrequest = scl.create_logout_request(destination, entityid, name_id=saml.NameID(text=samluid))
         samlrequest.session_index = samlp.SessionIndex(session.get(self.session_samlsessionindex_key))
         to_sign = []
         samlrequest = signed_instance_factory(samlrequest, scl.sec, to_sign)
         logger.info('SSO logout request: %s' % samlrequest.to_string())
         session_id = samlrequest.id
         rstate = scl._relay_state(session_id)
-        (head, body) = http_redirect_message(samlrequest, destination, rstate)
-        logger.info('attempting to post: %s' % head[0][1])
-        return head[0][1]
+        msg = http_redirect_message(samlrequest, destination, rstate)
+        headers = dict(msg['headers'])
+        location = headers['Location']
+        logger.info('attempting to post: {}'.format(headers['Location']))
+        return location
 
     security.declarePrivate('resetCredentials')
     def resetCredentials(self, request, response):
@@ -345,8 +351,9 @@ class SAML2Plugin(BasePlugin):
         config = self._saml2_config()
         scl = Saml2Client(config)
         sessidx = session.get(self.session_samlsessionindex_key, '')
-        headers = scl.http_redirect_logout_request_check_session_index(request, sessidx, logger)
-        return request.response.redirect(headers[0][1], lock=True)
+        msg = scl.http_redirect_logout_request_check_session_index(request, sessidx, logger)
+        headers = dict(msg['headers'])
+        return request.response.redirect(headers['Location'], lock=True)
     
 
 classImplements(SAML2Plugin,

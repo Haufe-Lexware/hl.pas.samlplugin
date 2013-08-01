@@ -48,7 +48,7 @@ setup(name='hl.pas.samlplugin',
       zip_safe=False,
       install_requires=['setuptools',
                         # -*- Extra requirements: -*-
-                        'pysaml2==0.4.2',
+                        'pysaml2>=1.0',
                         'zope.app.container',
                         'Products.PluggableAuthService',
                         ],
