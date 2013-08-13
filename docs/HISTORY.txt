@@ -4,6 +4,7 @@ Changelog
 0.6dev (unreleased)
 -------------------
 
+- update to pysaml2 >= 1.0
 
 0.5 (24.7.2013)
 -------------------

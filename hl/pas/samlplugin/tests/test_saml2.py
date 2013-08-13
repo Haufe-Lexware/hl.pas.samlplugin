@@ -25,7 +25,6 @@ from saml2.sigver import pre_signature_part, SecurityContext, CryptoBackendXmlSe
 from saml2.s_utils import decode_base64_and_inflate, deflate_and_base64_encode
 from hl.pas.samlplugin.interfaces import ISAMLLogoutHandler, ISAMLAttributeProvider, ISAMLSessionCheck
 
-from hl.pas.samlplugin.plugin import SAML2Plugin
 
 path = os.path.dirname(__file__)
 
@@ -340,15 +339,13 @@ class SAML2PluginTests(unittest.TestCase):
         """
         plugin = self._make_one()
         req = self._make_request()
-        resp = req.response
         req['ACTUAL_URL'] = req.SERVER_URL = 'http://nohost/somepath'
         qs = 'x=1&y:int=2'
         req.environ['QUERY_STRING'] = qs
         req.form.update({'x':'1', 'y':2})
         plugin.checksession(req)
-
         expected = 'http://nohost/somepath'
-        session_storedurl_key = SAML2Plugin.session_storedurl_key
+        session_storedurl_key = plugin.session_storedurl_key
         address, querystring = req.SESSION.get(session_storedurl_key).split('?')
         self.assertEquals(address, expected, 'unexpected stored url in session, expected %s, got %s.' % (expected, address))
         expected = dict([ item.split('=') for item in qs.split('&')])
