@@ -1,35 +1,35 @@
 Changelog
 =========
 
-0.6dev (unreleased)
+0.6 (2013-08-16)
 -------------------
 
-- update to pysaml2 >= 1.0
+- use pysaml2 >= 1.0
 
-0.5 (24.7.2013)
+0.5 (2013-07-24)
 -------------------
 
 - fixed configuration caching issue (when using multiple plugins)
 
-0.4 (4.7.2013)
+0.4 (2013-07-04)
 -------------------
 
 - improved config caching
 - add sample data for unittests
 
-0.3 (2.7.2013)
+0.3 (2013-07-02)
 -------------------
 
 - add icon
 
 
-0.2 (2.7.2013)
+0.2 (2013-07-02)
 -------------------
 
 - fix MANIFEST.in
 
 
-0.1 (2.7.2013)
+0.1 (2013-07-02)
 -------------------
 
 - initial release
