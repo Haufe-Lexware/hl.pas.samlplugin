@@ -41,6 +41,9 @@ settings for AssertionConsumerService and SingleLogoutService. This will be an X
         </RoleDescriptor>
     </EntityDescriptor>
 
+At the moment the bindings specified in the above example (i.e. HTTP-Redirect for the SingleLogoutService and HTTP-POST 
+for the AssertionConsumerService) are the only ones that are supported. For the authentication request, HTTP-Redirect is used.
+
 Please refer to available SAML2 documentation for further information.
 
 On the SAML2 PAS plugins' properties tab, you will need to specify some more properties to make things work:
@@ -52,7 +55,7 @@ On the SAML2 PAS plugins' properties tab, you will need to specify some more pro
 - the attribute provided by the IDP that should be used as the users login attribute (i.e. the user id used by Zope)
 - additional user properties given by the IDP that should be stored in the users session
 
-Please have a look in the ``browser`` and the ``skins/auth`` subdirectories for example on how to handle login/logout 
+Please have a look in the ``browser`` and the ``skins/auth`` subdirectories for examples on how to handle login/logout 
 for a CMFSite.
 
 It seems important to note that this PAS plugin (and the SAML2 protocol) only provides authentication. It is rather likely 
