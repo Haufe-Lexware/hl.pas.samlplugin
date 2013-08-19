@@ -229,7 +229,7 @@ class SAML2Plugin(BasePlugin):
         resp = request['RESPONSE']
 
         # Redirect if desired.
-        url = '{}/{}'.format(self.absolute_url(), 'login_form')
+        url = '{base}/{login}'.format(base=self.absolute_url(), login='login_form')
         came_from = request.get('came_from', None)
 
         if came_from is None:
@@ -330,7 +330,7 @@ class SAML2Plugin(BasePlugin):
         msg = http_redirect_message(samlrequest, destination, rstate)
         headers = dict(msg['headers'])
         location = headers['Location']
-        logger.info('attempting to post: {}'.format(headers['Location']))
+        logger.info('attempting to post: {loc}'.format(loc=headers['Location']))
         return location
 
     security.declarePrivate('resetCredentials')
