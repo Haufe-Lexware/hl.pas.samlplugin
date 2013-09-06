@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 def read(*rnames):
     return open(os.path.join(os.path.dirname(__file__), *rnames)).read()
 
-version = '0.8dev'
+version = '0.7.1'
 
 long_description = (
     read('README.rst')
@@ -48,7 +48,7 @@ setup(name='hl.pas.samlplugin',
       zip_safe=False,
       install_requires=['setuptools',
                         # -*- Extra requirements: -*-
-                        'pysaml2>=1.0',
+                        'pysaml2==1.0.2',
                         'zope.app.container',
                         'Products.PluggableAuthService',
                         ],
