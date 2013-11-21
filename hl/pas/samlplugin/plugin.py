@@ -73,7 +73,7 @@ class SAML2Plugin(BasePlugin):
     saml2_xmlsec = '/usr/bin/xmlsec1'
     saml2_login_attribute = 'email'
     saml2_user_properties = ('firstname', 'lastname', 'email')
-    saml2_authn_context_class = 'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport'
+    saml2_authn_context_class = 'do not specify'
     possible_authn_context_types = ('do not specify',
                                     'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport', 
                                     'urn:oasis:names:tc:SAML:2.0:ac:classes:PreviousSession', 
