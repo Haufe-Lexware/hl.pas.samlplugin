@@ -64,6 +64,7 @@ class SAML2Plugin(BasePlugin):
     session_sessid = '_saml2_sessid'
     session_user_properties = '_saml2_session_user_properties'
     _v_config = None
+    _authn_context_template = """<samlp:RequestedAuthnContext xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" Comparison="exact"><saml:AuthnContextClassRef xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">{context_class}</saml:AuthnContextClassRef></samlp:RequestedAuthnContext>"""
 
     # ZMI properties
     saml2_idp_configfile = '%s/idp.xml' % os.getcwd()
@@ -72,10 +73,16 @@ class SAML2Plugin(BasePlugin):
     saml2_xmlsec = '/usr/bin/xmlsec1'
     saml2_login_attribute = 'email'
     saml2_user_properties = ('firstname', 'lastname', 'email')
+    saml2_authn_context_class = 'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport'
+    possible_authn_context_types = ('do not specify',
+                                    'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport', 
+                                    'urn:oasis:names:tc:SAML:2.0:ac:classes:PreviousSession', 
+                                    'urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken')
     _properties = BasePlugin._properties + (
         {'id':'saml2_idp_configfile', 'label':'path to IDP config file', 'type':'string', 'mode':'rw'},
         {'id':'saml2_sp_url', 'label':'SP URL', 'type':'string', 'mode':'rw'},
         {'id':'saml2_sp_entityid', 'label':'SP entity id', 'type':'string', 'mode':'rw'},
+        {'id':'saml2_authn_context_class', 'label':'AuthnContextClass to use with authentication request', 'type':'selection', 'mode':'rw', 'select_variable':'possible_authn_context_types'},
         {'id':'saml2_xmlsec', 'label':'path to xmlsec executable', 'type':'string', 'mode':'rw'},
         {'id':'saml2_login_attribute', 'label':'SAML2 attribute used as login', 'type':'string', 'mode':'rw'},
         {'id':'saml2_user_properties', 'label':'SAML2 user properties given by sso server', 'type':'lines', 'mode':'rw'},
@@ -147,6 +154,10 @@ class SAML2Plugin(BasePlugin):
         super(SAML2Plugin, self)._setPropValue(id, value)
         self._v_config = None
 
+    def _authn_context(self):
+        if self.saml2_authn_context_class != 'do not specify':
+            return  samlp.requested_authn_context_from_string(self._authn_context_template.format(context_class=self.saml2_authn_context_class))
+
     security.declarePrivate('extractCredentials')
     def extractCredentials(self, request):
         """
@@ -174,7 +185,7 @@ class SAML2Plugin(BasePlugin):
             session.set(self.session_lock_key, True)
             logger.info('ACTUAL_URL: %s' % actual_url)
             scl = Saml2Client(config)
-            (sid, result) = scl.authenticate(entityid, binding=BINDING_HTTP_REDIRECT, is_passive='true')
+            (sid, result) = scl.authenticate(entityid, binding=BINDING_HTTP_REDIRECT, is_passive='true', requested_authn_context=self._authn_context())
             session.set(self.session_sessid, {sid:''})
             session.set(self.session_storedurl_key, actual_url_with_query)
             headers = dict(result['headers'])
@@ -283,7 +294,7 @@ class SAML2Plugin(BasePlugin):
         # Initiate challenge
         scl = Saml2Client(config)
         # if we have an existing SSI session, continue in extractCredentials, otherwise redirect to SAML2 login
-        (sid, result) = scl.authenticate(entityid, binding=BINDING_HTTP_REDIRECT)
+        (sid, result) = scl.authenticate(entityid, binding=BINDING_HTTP_REDIRECT, requested_authn_context=self._authn_context())
         session.set(self.session_sessid, {sid:''})
         headers = dict(result['headers'])
         for k, v in headers.items():

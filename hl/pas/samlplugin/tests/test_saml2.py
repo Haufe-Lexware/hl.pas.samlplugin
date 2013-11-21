@@ -371,7 +371,25 @@ class SAML2PluginTests(unittest.TestCase):
         self.assertEquals(request.assertion_consumer_service_url, expected, 'unexpected assertion consumer service url, expected %s, got %s.' % (expected, request.assertion_consumer_service_url))
 
 
-        
+    def test_authn_context(self): 
+        plugin = self._make_one()
+        for method in (plugin.active, plugin.passive):
+            for ac in plugin.possible_authn_context_types:
+                req = self._make_request()
+                resp = req.response
+                plugin.saml2_authn_context_class = ac
+                method(req)
+                get = resp.getHeader('location')
+                urlvars = {}
+                urlvars.update([tuple(get.split('?')[1].split('='))])
+                saml_request = urlvars.get('SAMLRequest', '')
+                request = self._parse_authn_request(saml_request)
+                if ac == 'do not specify':
+                    self.failUnless(request.requested_authn_context is None, 'bogus request: %s' % request.to_string())
+                    continue
+                self.failUnless(len(request.requested_authn_context.authn_context_class_ref) == 1, 'bogus request: %s' % request.requested_authn_context.to_string())
+                got = request.requested_authn_context.authn_context_class_ref[0].text
+                self.failUnless(got == ac, 'unexpected authn context class - got %s, expected %s.' % (got, ac))
 
     def test_interfaces(self):
         """
