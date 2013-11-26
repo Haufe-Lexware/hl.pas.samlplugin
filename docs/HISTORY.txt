@@ -1,8 +1,10 @@
 Changelog
 =========
 
-0.8dev (unreleased)
+0.8 (2013-11-25)
 -------------------
+
+- added support for AuthnContextClass
 
 0.7.1 (2013-09-06)
 -------------------
