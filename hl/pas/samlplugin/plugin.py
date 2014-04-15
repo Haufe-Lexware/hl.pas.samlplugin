@@ -80,8 +80,8 @@ class SAML2Plugin(BasePlugin):
                                     'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport', 
                                     'urn:oasis:names:tc:SAML:2.0:ac:classes:PreviousSession', 
                                     'urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken')
-    saml2_service_url_binding = BINDING_HTTP_REDIRECT
-    possible_service_url_bindings = (BINDING_HTTP_REDIRECT, BINDING_HTTP_ARTIFACT)
+    saml2_service_url_binding = BINDING_HTTP_POST
+    possible_service_url_bindings = (BINDING_HTTP_POST, BINDING_HTTP_ARTIFACT)
     _properties = BasePlugin._properties + (
         {'id':'saml2_idp_configfile', 'label':'path to IDP config file', 'type':'string', 'mode':'rw'},
         {'id':'saml2_sp_url', 'label':'SP URL', 'type':'string', 'mode':'rw'},
