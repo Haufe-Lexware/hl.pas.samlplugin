@@ -1,14 +1,25 @@
+import copy
 import logging
+import base64
+import requests
+from binascii import hexlify
+from Cookie import SimpleCookie
 from saml2.client import Saml2Client as BaseClient
-from saml2.s_utils import sid, decode_base64_and_inflate
-from saml2 import saml, samlp, class_name, VERSION
+from saml2.s_utils import sid, decode_base64_and_inflate, UnravelError
+from saml2 import saml, samlp, class_name, soap, VERSION
 from saml2.time_util import instant
 from saml2.sigver import pre_signature_part, signed_instance_factory
-from saml2.pack import http_redirect_message
+from saml2.pack import http_redirect_message, make_soap_enveloped_saml_thingy
 from saml2.mdstore import destinations
-from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST, BINDING_PAOS
+from saml2.entity import ARTIFACT_TYPECODE
+from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST, BINDING_SOAP, BINDING_PAOS, BINDING_URI
 
 logger = logging.getLogger(__name__)
+
+if requests.__version__ < "2.0.0":
+    DICT_HEADERS = False
+else:
+    DICT_HEADERS = True
 
 
 class Saml2Client(BaseClient):
@@ -119,7 +130,7 @@ class Saml2Client(BaseClient):
 
         return self.authn_request(session_id, location, service_url,
                                   spentityid, my_name, vorg, scoping, log,
-                                  sign, binding=binding, **kwargs)
+                                  sign, binding=service_url_binding or binding, **kwargs)
 
 
     def authenticate(self, entityid=None, relay_state="",
@@ -228,4 +239,97 @@ class Saml2Client(BaseClient):
                                         rstate, 'SAMLResponse')
 
         return msg
+
+
+    def artifact2destination(self, artifact, descriptor):
+        """
+        XXX taken from pysaml2 1.0.3 (broken in 1.0.2). Remove when upgrading
+
+        Translate an artifact into a receiver location
+
+        :param artifact: The Base64 encoded SAML artifact
+        :return:
+        """
+
+        _art = base64.b64decode(artifact)
+
+        assert _art[:2] == ARTIFACT_TYPECODE
+
+        try:
+            endpoint_index = str(int(_art[2:4]))
+        except ValueError:
+            endpoint_index = str(int(hexlify(_art[2:4])))
+        entity = self.sourceid[_art[4:24]]
+
+        destination = None
+        for desc in entity["%s_descriptor" % descriptor]:
+            for srv in desc["artifact_resolution_service"]:
+                if srv["index"] == endpoint_index:
+                    destination = srv["location"]
+                    break
+
+        return destination
+
+    def send(self, url, method="GET", **kwargs):
+        """
+        XXX broken in pysaml2 1.0.2. Remove when upgrading
+        """
+        _kwargs = copy.copy(self.request_args)
+        if kwargs:
+            _kwargs.update(kwargs)
+
+        if self.cookiejar:
+            _cd = self.cookies(url)
+            if _cd:
+                _kwargs["cookies"] = _cd
+
+        if self.user and self.passwd:
+            _kwargs["auth"] = (self.user, self.passwd)
+
+        if "headers" in _kwargs and isinstance(_kwargs["headers"], list):
+            if DICT_HEADERS:
+                # requests.request wants a dict of headers, not a list of tuples
+                _kwargs["headers"] = dict(_kwargs["headers"])
+
+        logger.debug("%s to %s" % (method, url))
+        for arg in ["cookies", "data", "auth"]:
+            try:
+                logger.debug("%s: %s" % (arg.upper(), _kwargs[arg]))
+            except KeyError:
+                pass
+        r = requests.request(method, url, **_kwargs)
+        logger.debug("Response status: %s" % r.status_code)
+
+        try:
+            self.set_cookie(SimpleCookie(r.headers["set-cookie"]), r)
+        except (AttributeError, KeyError):
+            pass
+
+        return r
+
+    def use_soap(self, request, destination="", soap_headers=None, sign=False):
+        """
+        XXX Atlantis uses SOAP 1.1
+        Construct the necessary information for using SOAP+POST
+
+        :param request:
+        :param destination:
+        :param soap_headers:
+        :param sign:
+        :return: dictionary
+        """
+        headers = [("content-type", "text/xml")]
+
+        soap_message = make_soap_enveloped_saml_thingy(request, soap_headers)
+
+        logger.debug("SOAP message: %s" % soap_message)
+
+        if sign and self.sec:
+            _signed = self.sec.sign_statement(soap_message,
+                                              class_name=class_name(request),
+                                              node_id=request.id)
+            soap_message = _signed
+
+        return {"url": destination, "method": "POST",
+                "data": soap_message, "headers": headers}
 

@@ -20,10 +20,11 @@ from saml2.config import SPConfig
 from saml2 import saml, samlp
 from saml2.sigver import signed_instance_factory
 from saml2.pack import http_redirect_message
-from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
+from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_ARTIFACT, BINDING_HTTP_POST
 from saml2.saml import NAME_FORMAT_URI
 from saml2.mdstore import destinations
 from client import Saml2Client
+from util import get_identity
 from interfaces import ISAMLLogoutHandler, ISAMLAttributeProvider, ISAMLSessionCheck
 
 logger = logging.getLogger('hl.pas.samlplugin')
@@ -31,6 +32,7 @@ logger = logging.getLogger('hl.pas.samlplugin')
 
 manage_addSAML2PluginForm = PageTemplateFile(
     'www/addSAML2Plugin', globals(), __name__='manage_addSAML2PluginForm' )
+
 
 
 def addSAML2Plugin(dispatcher, id, title=None, REQUEST=None):
@@ -78,11 +80,14 @@ class SAML2Plugin(BasePlugin):
                                     'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport', 
                                     'urn:oasis:names:tc:SAML:2.0:ac:classes:PreviousSession', 
                                     'urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken')
+    saml2_service_url_binding = BINDING_HTTP_REDIRECT
+    possible_service_url_bindings = (BINDING_HTTP_REDIRECT, BINDING_HTTP_ARTIFACT)
     _properties = BasePlugin._properties + (
         {'id':'saml2_idp_configfile', 'label':'path to IDP config file', 'type':'string', 'mode':'rw'},
         {'id':'saml2_sp_url', 'label':'SP URL', 'type':'string', 'mode':'rw'},
         {'id':'saml2_sp_entityid', 'label':'SP entity id', 'type':'string', 'mode':'rw'},
         {'id':'saml2_authn_context_class', 'label':'AuthnContextClass to use with authentication request', 'type':'selection', 'mode':'rw', 'select_variable':'possible_authn_context_types'},
+        {'id':'saml2_service_url_binding', 'label':'Service URL Binding', 'type':'selection', 'mode':'rw', 'select_variable':'possible_service_url_bindings'},
         {'id':'saml2_xmlsec', 'label':'path to xmlsec executable', 'type':'string', 'mode':'rw'},
         {'id':'saml2_login_attribute', 'label':'SAML2 attribute used as login', 'type':'string', 'mode':'rw'},
         {'id':'saml2_user_properties', 'label':'SAML2 user properties given by sso server', 'type':'lines', 'mode':'rw'},
@@ -137,7 +142,7 @@ class SAML2Plugin(BasePlugin):
             sp_config['entityid'] = self.saml2_sp_entityid
             sp_config['service']['sp']['name'] = self.saml2_sp_entityid
             sp_config['service']['sp']['url'] = self.saml2_sp_url
-            sp_config['service']['sp']['endpoints']['assertion_consumer_service'] = [self.saml2_sp_url]
+            sp_config['service']['sp']['endpoints']['assertion_consumer_service'] = [self.saml2_sp_url,]
             sp_config['service']['sp']['endpoints']['single_logout_service'] = ['%s/logout' % self.saml2_sp_url, BINDING_HTTP_REDIRECT]
             sp_config['service']['sp']['url'] = self.saml2_sp_url
             sp_config['xmlsec_binary'] = self.saml2_xmlsec
@@ -158,6 +163,20 @@ class SAML2Plugin(BasePlugin):
         if self.saml2_authn_context_class != 'do not specify':
             return  samlp.requested_authn_context_from_string(self._authn_context_template.format(context_class=self.saml2_authn_context_class))
 
+    def _setup_local_session(self, session, scl, session_info):
+        creds = {}
+        session.set(self.session_auth_key, True)
+        ava = session_info.ava.copy()
+        login = ava[self.saml2_login_attribute.lower()][0] # whats in 'login' is controlled by the saml2_login_attribute property
+        creds['login'] = login
+        creds['ssiauth'] = True
+        session.set(self.session_user_properties, PersistentMapping(dict([(key, ava[key.lower()][0]) for key in self.saml2_user_properties])))
+        session.set(self.session_login_key, login)
+        # store relevant information for Single Logout in session
+        session.set(self.session_samluid_key, session_info.assertion.subject.name_id.text)
+        session.set(self.session_samlsessionindex_key, session_info.assertion.authn_statement[0].session_index)
+        return creds
+
     security.declarePrivate('extractCredentials')
     def extractCredentials(self, request):
         """
@@ -173,6 +192,7 @@ class SAML2Plugin(BasePlugin):
             return {'login': session[self.session_login_key], 'ssiauth':True}
         creds={}
         config = self._saml2_config()
+        scl = Saml2Client(config)
         entityid = config.metadata.keys()[0]
         sp_url = self.saml2_sp_url
         actual_url = request.get("ACTUAL_URL", '')
@@ -184,46 +204,48 @@ class SAML2Plugin(BasePlugin):
         if 'SAMLResponse' not in request.form and not session.get(self.session_lock_key, False):
             session.set(self.session_lock_key, True)
             logger.info('ACTUAL_URL: %s' % actual_url)
-            scl = Saml2Client(config)
-            (sid, result) = scl.authenticate(entityid, binding=BINDING_HTTP_REDIRECT, is_passive='true', requested_authn_context=self._authn_context())
-            session.set(self.session_sessid, {sid:''})
+            (sid, result) = scl.authenticate(entityid, binding=BINDING_HTTP_REDIRECT, is_passive='true', requested_authn_context=self._authn_context(), service_url_binding=self.saml2_service_url_binding,)
+            #session.set(self.session_sessid, {sid:''})
             session.set(self.session_storedurl_key, actual_url_with_query)
             headers = dict(result['headers'])
             for k, v in headers.items():
                 request.response.setHeader(k, v)
             request.response.redirect(headers['Location'], lock=1)
-        # Idp response
+        # Idp response - protocol binding POST
         if 'SAMLResponse' in request.form and actual_url.strip('/') == sp_url.strip('/'):
             post_env = request.environ.copy()
             post_env['QUERY_STRING'] = ''
-
             request.stdin.seek(0)
             post = cgi.FieldStorage(
                 fp = StringIO(request.stdin.read()),
                 environ = post_env,
                 keep_blank_values = True,
             )
-            scl = Saml2Client(config)
             storedurl = session.get(self.session_storedurl_key, actual_url_with_query)
             if session.has_key(self.session_storedurl_key):
                 session.delete(self.session_storedurl_key)
             request.response.redirect(storedurl)
             session.set(self.session_auth_key, True)
             try:
-                session_info = scl.parse_authn_request_response(post['SAMLResponse'].value, BINDING_HTTP_POST, session.get(self.session_sessid, {}))
+                sessinfo = scl.parse_authn_request_response(post['SAMLResponse'].value, BINDING_HTTP_POST, session.get(self.session_sessid, {}))
             except:
                 session.set(self.session_auth_key, False)
                 # Saml2 auth failed. Do not ask again.
                 return None
-            ava = session_info.ava.copy()
-            login = ava[self.saml2_login_attribute.lower()][0] # whats in 'login' is controlled by the saml2_login_attribute property
-            creds['login'] = login
-            creds['ssiauth'] = True
-            session.set(self.session_user_properties, PersistentMapping(dict([(key, ava[key.lower()][0]) for key in self.saml2_user_properties])))
-            session.set(self.session_login_key, login)
-            # store relevant information for Single Logout in session
-            session.set(self.session_samluid_key, scl.users.subjects()[0].text)
-            session.set(self.session_samlsessionindex_key, session_info.assertion.authn_statement[0].session_index)
+            creds = self._setup_local_session(session, scl, sessinfo)
+        elif 'SAMLart' in request.form:
+            r = scl.artifact2message(request.form['SAMLart'], 'idpsso')
+            if r.status_code == 200:
+                try:
+                    response = scl.parse_artifact_resolve_response(r.text)
+                    response.attribute_converters = scl.config.attribute_converters
+                    response.assertion = response.assertion[0]
+                    response.ava = get_identity(response)
+                    creds = self._setup_local_session(session, scl, response)
+                except:
+                    session.set(self.session_auth_key, False)
+                    # Saml2 auth failed. Do not ask again.
+                    return None
         return creds
 
     security.declarePrivate('authenticateCredentials')

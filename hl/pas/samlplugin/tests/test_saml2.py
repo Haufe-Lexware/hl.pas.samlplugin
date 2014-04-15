@@ -95,7 +95,7 @@ class SAML2PluginTests(unittest.TestCase):
 
 
     def _make_one(self):
-        o = self._get_target_class()('atlantikSSIPlugin')
+        o = self._get_target_class()('saml2')
         o.saml2_user_properties = ('FirstName', 'LastName', 'huid')
         o.saml2_idp_configfile = os.path.join(path, 'data', 'idp.xml')
         o.saml2_sp_url = 'http://nohost/'
@@ -173,18 +173,15 @@ class SAML2PluginTests(unittest.TestCase):
                               attribute_statement=attribute_statement,
                              )
 
-        response = Response(id='s2998eb2e03b5006acb0a931d0fb558b0e4ec360c7',
-                            in_response_to=authn_request_id,
-                            version='2.0',
-                            issue_instant=issue_instant,
-                            destination='http://nohost/',
-                            issuer=issuer,
-                            signature=signature,
-                            status=status,
-                            assertion=assertion,
-                           )
-
-        return response
+        return Response(id='s2998eb2e03b5006acb0a931d0fb558b0e4ec360c7',
+                        in_response_to=authn_request_id,
+                        version='2.0',
+                        issue_instant=issue_instant,
+                        destination='http://nohost/',
+                        issuer=issuer,
+                        signature=signature,
+                        status=status,
+                        assertion=assertion)
 
     def sign_response(self, response):
         response = '%s' % response
