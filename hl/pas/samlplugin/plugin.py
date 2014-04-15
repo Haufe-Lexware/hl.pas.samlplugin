@@ -225,7 +225,6 @@ class SAML2Plugin(BasePlugin):
             if session.has_key(self.session_storedurl_key):
                 session.delete(self.session_storedurl_key)
             request.response.redirect(storedurl)
-            session.set(self.session_auth_key, True)
             try:
                 sessinfo = scl.parse_authn_request_response(post['SAMLResponse'].value, BINDING_HTTP_POST, session.get(self.session_sessid, {}))
             except:
@@ -234,6 +233,10 @@ class SAML2Plugin(BasePlugin):
                 return None
             creds = self._setup_local_session(session, scl, sessinfo)
         elif 'SAMLart' in request.form:
+            storedurl = session.get(self.session_storedurl_key, actual_url_with_query)
+            if session.has_key(self.session_storedurl_key):
+                session.delete(self.session_storedurl_key)
+            request.response.redirect(storedurl)
             r = scl.artifact2message(request.form['SAMLart'], 'idpsso')
             if r.status_code == 200:
                 try:
