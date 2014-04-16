@@ -4,6 +4,8 @@ Changelog
 0.9dev (unreleased)
 -------------------
 
+- added support for artifact service url binding
+
 0.8 (2013-11-25)
 -------------------
 

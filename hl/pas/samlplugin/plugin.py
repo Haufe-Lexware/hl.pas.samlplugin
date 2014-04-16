@@ -87,7 +87,7 @@ class SAML2Plugin(BasePlugin):
         {'id':'saml2_sp_url', 'label':'SP URL', 'type':'string', 'mode':'rw'},
         {'id':'saml2_sp_entityid', 'label':'SP entity id', 'type':'string', 'mode':'rw'},
         {'id':'saml2_authn_context_class', 'label':'AuthnContextClass to use with authentication request', 'type':'selection', 'mode':'rw', 'select_variable':'possible_authn_context_types'},
-        {'id':'saml2_service_url_binding', 'label':'Service URL Binding', 'type':'selection', 'mode':'rw', 'select_variable':'possible_service_url_bindings'},
+        {'id':'saml2_service_url_binding', 'label':'service URL binding', 'type':'selection', 'mode':'rw', 'select_variable':'possible_service_url_bindings'},
         {'id':'saml2_xmlsec', 'label':'path to xmlsec executable', 'type':'string', 'mode':'rw'},
         {'id':'saml2_login_attribute', 'label':'SAML2 attribute used as login', 'type':'string', 'mode':'rw'},
         {'id':'saml2_user_properties', 'label':'SAML2 user properties given by sso server', 'type':'lines', 'mode':'rw'},
