@@ -5,6 +5,7 @@ import unittest
 import sgmllib
 import base64
 import urllib
+import requests
 from datetime import datetime, timedelta
 from cStringIO import StringIO
 from UserDict import UserDict
@@ -18,7 +19,7 @@ from saml2.saml import AuthnStatement, AuthnContext, AuthnContextClassRef
 from saml2.saml import attribute_statement_from_string
 from saml2.saml import NAMEID_FORMAT_TRANSIENT, SCM_BEARER
 from saml2.saml import NAMEID_FORMAT_ENTITY
-from saml2.samlp import Response, Status, StatusCode
+from saml2.samlp import Response, ArtifactResponse, Status, StatusCode
 from saml2.samlp import STATUS_SUCCESS
 from saml2.samlp import authn_request_from_string, logout_request_from_string, logout_response_from_string
 from saml2.sigver import pre_signature_part, SecurityContext, CryptoBackendXmlSec1
@@ -44,14 +45,17 @@ class SessionMock(UserDict):
     delete = UserDict.__delitem__
 
 
-class URLOpenResponseMock(object):
+class ResponseMock(object):
 
     shared_state = {}
+    text = ''
 
-    def __init__(self, status, request):
+    def __init__(self, status, request, method=None, **kwargs):
         self.__dict__ = self.shared_state
-        self.code = status
+        self.code = self.status_code = status
         self.request = request 
+        self.method = method
+        self.kwargs = kwargs
 
 
 class FormParser(sgmllib.SGMLParser):
@@ -78,16 +82,52 @@ class FormParser(sgmllib.SGMLParser):
 class SAML2PluginTests(unittest.TestCase):
 
     session_index = 's24d8e3c95e92e861f791016d32f92a8e588686101'
-    attribute_xml = """<ns1:AttributeStatement xmlns:ns1="urn:oasis:names:tc:SAML:2.0:assertion"><ns1:Attribute Name="SSOToken"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance">AQIC5wM2LY4SfcwB-hRxD21HHhBm_8RO3TkGHKhcWmmGaUc.*AAJTSQACMDE.*</ns1:AttributeValue></ns1:Attribute><ns1:Attribute Name="HMGUSERID"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance">829c6d29-5a0f-4d91-9617-a686614dd6fd</ns1:AttributeValue></ns1:Attribute><ns1:Attribute Name="huid"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance">1701765</ns1:AttributeValue></ns1:Attribute><ns1:Attribute Name="Salutation"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance">Herr</ns1:AttributeValue></ns1:Attribute><ns1:Attribute Name="Title"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance" /></ns1:Attribute><ns1:Attribute Name="FirstName"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance">Thomas</ns1:AttributeValue></ns1:Attribute><ns1:Attribute Name="LastName"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance">Schorr</ns1:AttributeValue></ns1:Attribute><ns1:Attribute Name="Email"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance">thomas.schorr@haufe-lexware.com</ns1:AttributeValue></ns1:Attribute></ns1:AttributeStatement>"""
+    attribute_xml = \
+        """<ns1:AttributeStatement xmlns:ns1="urn:oasis:names:tc:SAML:2.0:assertion"><ns1:Attribute Name="SSOToken"><ns1:AttributeValue ns2:type="xs:string" """\
+        """xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance">AQIC5wM2LY4SfcwB-hRxD21HHhBm_8RO3TkGHKhcWmmGaUc.*AAJTSQACMDE.*</ns1:AttributeValue></ns1:Attribute>"""\
+        """<ns1:Attribute Name="Salutation"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance">Herr</ns1:AttributeValue></ns1:Attribute>"""\
+        """<ns1:Attribute Name="Title"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance" /></ns1:Attribute>"""\
+        """<ns1:Attribute Name="FirstName"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance">Thomas</ns1:AttributeValue></ns1:Attribute>"""\
+        """<ns1:Attribute Name="LastName"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance">Schorr</ns1:AttributeValue></ns1:Attribute>"""\
+        """<ns1:Attribute Name="Email"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance">thomas.schorr@haufe-lexware.com</ns1:AttributeValue></ns1:Attribute></ns1:AttributeStatement>"""
+    soap_artifact_response = \
+        """<soap-env:Envelope xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"><soap-env:Body>"""\
+        """<samlp:ArtifactResponse xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="s2f3c21d52024a3866e44c5f2e2e00e0f28561830a" """\
+        """InResponseTo="id-912c05fb95f9763132f259422bb26113" Version="2.0" IssueInstant="2014-04-16T12:04:42Z" Destination="https://nohost">"""\
+        """<saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">https://nohost/auth</saml:Issuer><samlp:Status xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">"""\
+        """<samlp:StatusCode  xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" Value="urn:oasis:names:tc:SAML:2.0:status:Success"></samlp:StatusCode></samlp:Status>"""\
+        """<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="s284dfd45f100f4a7b1ed1cb25a28ab42e63fc3d0a" InResponseTo="id-80c25be5605f68e2aa4e72660d736d7b" Version="2.0" """\
+        """IssueInstant="2014-04-16T12:04:42Z" Destination="https://nohost"><saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">"""\
+        """https://nohost/auth</saml:Issuer><samlp:Status xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"><samlp:StatusCode  xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" """\
+        """Value="urn:oasis:names:tc:SAML:2.0:status:Success"></samlp:StatusCode></samlp:Status>"""\
+        """<saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" Version="2.0" ID="s208ceb5d27c072d35ca6b2c29211788cb80beea8e" IssueInstant="2014-04-16T12:04:42Z">"""\
+        """<saml:Issuer>https://nohost/auth</saml:Issuer><saml:Subject><saml:NameID NameQualifier="https://nohost/auth" """\
+        """Format="urn:oasis:names:tc:SAML:2.0:nameid-format:transient">3TJes2TmJbwUrxplHOKeFcjty1l7</saml:NameID><saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">"""\
+        """<saml:SubjectConfirmationData NotOnOrAfter="2014-04-16T12:14:42Z" InResponseTo="id-80c25be5605f68e2aa4e72660d736d7b" Recipient="https://nohost" >"""\
+        """</saml:SubjectConfirmationData></saml:SubjectConfirmation></saml:Subject><saml:Conditions NotBefore="2014-04-16T11:54:42Z" NotOnOrAfter="2014-04-16T12:14:42Z">"""\
+        """<saml:AudienceRestriction><saml:Audience>https://nohost/</saml:Audience></saml:AudienceRestriction></saml:Conditions>"""\
+        """<saml:AuthnStatement AuthnInstant="2014-04-15T14:52:34Z" SessionIndex="s2d7759b46741a35f5a93a4deb620ed1468e6dc901"><saml:AuthnContext><saml:AuthnContextClassRef>"""\
+        """urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken</saml:AuthnContextClassRef></saml:AuthnContext></saml:AuthnStatement><saml:AttributeStatement>"""\
+        """<saml:Attribute Name="SSOToken"><saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">"""\
+        """AQIC5wM2LY4Sfczx22Y4ngUTZ7fqv3OG9-3jNcSf2NNqpsE.*AAJTSQACMDIAAlMxAAIwMQ..*</saml:AttributeValue></saml:Attribute><saml:Attribute Name="AuthLevel">"""\
+        """<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">15</saml:AttributeValue></saml:Attribute>"""\
+        """<saml:Attribute Name="Salutation"><saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">"""\
+        """Herr</saml:AttributeValue></saml:Attribute><saml:Attribute Name="FirstName"><saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">"""\
+        """Thomas</saml:AttributeValue></saml:Attribute><saml:Attribute Name="LastName"><saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" """\
+        """xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">Schorr</saml:AttributeValue></saml:Attribute><saml:Attribute Name="Email">"""\
+        """<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">thomas.schorr@haufe-lexware.com"""\
+        """</saml:AttributeValue></saml:Attribute></saml:AttributeStatement></saml:Assertion></samlp:Response></samlp:ArtifactResponse></soap-env:Body></soap-env:Envelope>"""
 
 
     def setUp(self):
         self._stored_urlopen = urllib.urlopen
-        urllib.urlopen = lambda url: URLOpenResponseMock(200, url)
-
+        self._stored_request = requests.request
+        urllib.urlopen = lambda url: ResponseMock(200, url)
+        requests.request = lambda method, url, **kwargs: ResponseMock(200, url, method, **kwargs)
 
     def tearDown(self):
         urllib.urlopen = self._stored_urlopen
+        requests.request = self._stored_request
 
     def _get_target_class(self):
         from hl.pas.samlplugin.plugin import SAML2Plugin
@@ -96,12 +136,12 @@ class SAML2PluginTests(unittest.TestCase):
 
     def _make_one(self):
         o = self._get_target_class()('saml2')
-        o.saml2_user_properties = ('FirstName', 'LastName', 'huid')
+        o.saml2_user_properties = ('FirstName', 'LastName', 'Email')
         o.saml2_idp_configfile = os.path.join(path, 'data', 'idp.xml')
         o.saml2_sp_url = 'http://nohost/'
         o.saml2_sp_entityid = 'http://nohost/'
         o.saml2_xmlsec = '/usr/bin/xmlsec1'
-        o.saml2_login_attribute = 'huid'
+        o.saml2_login_attribute = 'Email'
         return o
 
 
@@ -137,10 +177,10 @@ class SAML2PluginTests(unittest.TestCase):
         """
         enc_resp is an encrypted and base64 encoded logout response
         """
-        logout_xml = '<samlp:LogoutRequest  xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="s26bce413ad43ae7ff430a065122b7b16f31e17802" Version="2.0" IssueInstant="2012-05-08T12:46:11Z" Destination="http://zopedev2.haufe-ep.de:23680/kundenbereich/logout" NotOnOrAfter="2012-05-08T12:56:11Z"><saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">http://nohost/auth</saml:Issuer><saml:NameID xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" NameQualifier="http://nohost/auth" Format="urn:oasis:names:tc:SAML:2.0:nameid-format:transient">1kFn6vXCTJ7Uo5v572Z1IsaLK8yQ</saml:NameID><samlp:SessionIndex xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">s26997d5ef9cbf708cc46b732624d90bba15cfb101</samlp:SessionIndex></samlp:LogoutRequest>'
+        logout_xml = '<samlp:LogoutRequest  xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="s26bce413ad43ae7ff430a065122b7b16f31e17802" Version="2.0" IssueInstant="2012-05-08T12:46:11Z" Destination="http://nohost/logout" NotOnOrAfter="2012-05-08T12:56:11Z"><saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">http://nohost/auth</saml:Issuer><saml:NameID xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" NameQualifier="http://nohost/auth" Format="urn:oasis:names:tc:SAML:2.0:nameid-format:transient">1kFn6vXCTJ7Uo5v572Z1IsaLK8yQ</saml:NameID><samlp:SessionIndex xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">s26997d5ef9cbf708cc46b732624d90bba15cfb101</samlp:SessionIndex></samlp:LogoutRequest>'
         return deflate_and_base64_encode(logout_xml)
         
-    def _create_idp_response(self, authn_request_id='2aaaeb7692471eb4ba00d5546877a7fd'):
+    def _create_idp_response(self, authn_request_id='2aaaeb7692471eb4ba00d5546877a7fd', cls=Response):
         issue_instant = datetime.utcnow().isoformat() + 'Z'
         not_before = (datetime.utcnow() - timedelta(minutes=5)).isoformat() + 'Z'
         not_on_or_after = (datetime.utcnow() + timedelta(minutes=5)).isoformat() + 'Z'
@@ -173,15 +213,15 @@ class SAML2PluginTests(unittest.TestCase):
                               attribute_statement=attribute_statement,
                              )
 
-        return Response(id='s2998eb2e03b5006acb0a931d0fb558b0e4ec360c7',
-                        in_response_to=authn_request_id,
-                        version='2.0',
-                        issue_instant=issue_instant,
-                        destination='http://nohost/',
-                        issuer=issuer,
-                        signature=signature,
-                        status=status,
-                        assertion=assertion)
+        return cls(id='s2998eb2e03b5006acb0a931d0fb558b0e4ec360c7',
+                   in_response_to=authn_request_id,
+                   version='2.0',
+                   issue_instant=issue_instant,
+                   destination='http://nohost/',
+                   issuer=issuer,
+                   signature=signature,
+                   status=status,
+                   assertion=assertion)
 
     def sign_response(self, response):
         response = '%s' % response
@@ -193,9 +233,9 @@ class SAML2PluginTests(unittest.TestCase):
 
     
     def test_authenticate(self):
-        creds = {'ssiauth':True, 'login':'1701765'}
+        creds = {'ssiauth':True, 'login':'thomas.schorr@haufe-lexware.com'}
         plugin = self._make_one()
-        expected = ('1701765', '1701765')
+        expected = ('thomas.schorr@haufe-lexware.com', 'thomas.schorr@haufe-lexware.com')
         got = plugin.authenticateCredentials(creds)
         self.failUnless(expected == got, 'expected %s, got %s' % (expected, got))
         creds['ssiauth'] = False
@@ -231,9 +271,22 @@ class SAML2PluginTests(unittest.TestCase):
         session.set('_saml2_storedurl', 'http://nohost/stored_url')
         session.set('_saml2_sessid', {'2aaaeb7692471eb4ba00d5546877a7fd':''})
         creds = plugin.extractCredentials(req)
-        self.assertEquals(creds['login'], '1701765')
+        self.assertEquals(creds['login'], 'thomas.schorr@haufe-lexware.com')
         got = session.get('_saml2_session_index', '')
         self.assertEquals(got, self.session_index, 'Expected session index %s, got %s' % (self.session_index, got))
+
+    def test_passive_artifact_response(self):
+        plugin = self._make_one()
+        req = self._make_request()
+        ResponseMock.text = self.soap_artifact_response
+        req.form['SAMLart'] = 'AAQAAJua9tAo9a1t0STYSpdn907OIx0lhLC5QgJKy9SOtEaeXyj7sON2MDE='
+        req.environ['REQUEST_METHOD'] = 'GET'
+        session = req.SESSION
+        session.set('_saml2_storedurl', 'http://nohost/stored_url')
+        creds = plugin.passive(req)
+        self.failUnless(type(creds) == dict, 'unexpected credentials: %s' % creds)
+        self.failUnless(creds['login'] == 'thomas.schorr@haufe-lexware.com', 'unexpected credentials: %s' % creds)
+        self.failUnless(creds['ssiauth'], 'unexpected credentials: %s' % creds)
     
     def test_active(self):
         plugin = self._make_one()

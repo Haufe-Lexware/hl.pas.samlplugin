@@ -238,6 +238,7 @@ class SAML2Plugin(BasePlugin):
                 session.delete(self.session_storedurl_key)
             request.response.redirect(storedurl)
             r = scl.artifact2message(request.form['SAMLart'], 'idpsso')
+            logger.info(r.text)
             if r.status_code == 200:
                 try:
                     response = scl.parse_artifact_resolve_response(r.text)
