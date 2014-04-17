@@ -52,6 +52,7 @@ On the SAML2 PAS plugins' properties tab, you will need to specify some more pro
 - the service endpoint URL, i.e. http://zopehost:8080/site in the example above
 - the service endpoint entity id as given to the IDP
 - the AuthnContextClass to use with the authentication request
+- the service URL binding to use for the passive session check
 - the absolute path to the xmlsec executable (s. pysaml2 documentation)
 - the attribute provided by the IDP that should be used as the users login attribute (i.e. the user id used by Zope)
 - additional user properties given by the IDP that should be stored in the users session
