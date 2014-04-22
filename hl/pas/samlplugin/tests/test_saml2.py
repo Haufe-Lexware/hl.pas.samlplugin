@@ -19,11 +19,12 @@ from saml2.saml import AuthnStatement, AuthnContext, AuthnContextClassRef
 from saml2.saml import attribute_statement_from_string
 from saml2.saml import NAMEID_FORMAT_TRANSIENT, SCM_BEARER
 from saml2.saml import NAMEID_FORMAT_ENTITY
-from saml2.samlp import Response, ArtifactResponse, Status, StatusCode
+from saml2.samlp import Response, Status, StatusCode
 from saml2.samlp import STATUS_SUCCESS
 from saml2.samlp import authn_request_from_string, logout_request_from_string, logout_response_from_string
 from saml2.sigver import pre_signature_part, SecurityContext, CryptoBackendXmlSec1
 from saml2.s_utils import decode_base64_and_inflate, deflate_and_base64_encode
+from saml2.time_util import instant
 from hl.pas.samlplugin.interfaces import ISAMLLogoutHandler, ISAMLAttributeProvider, ISAMLSessionCheck
 
 
@@ -93,7 +94,7 @@ class SAML2PluginTests(unittest.TestCase):
     soap_artifact_response = \
         """<soap-env:Envelope xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"><soap-env:Body>"""\
         """<samlp:ArtifactResponse xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="s2f3c21d52024a3866e44c5f2e2e00e0f28561830a" """\
-        """InResponseTo="id-912c05fb95f9763132f259422bb26113" Version="2.0" IssueInstant="2014-04-16T12:04:42Z" Destination="https://nohost">"""\
+        """InResponseTo="id-912c05fb95f9763132f259422bb26113" Version="2.0" IssueInstant="%s" Destination="https://nohost">"""\
         """<saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">https://nohost/auth</saml:Issuer><samlp:Status xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">"""\
         """<samlp:StatusCode  xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" Value="urn:oasis:names:tc:SAML:2.0:status:Success"></samlp:StatusCode></samlp:Status>"""\
         """<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="s284dfd45f100f4a7b1ed1cb25a28ab42e63fc3d0a" InResponseTo="id-80c25be5605f68e2aa4e72660d736d7b" Version="2.0" """\
@@ -116,7 +117,7 @@ class SAML2PluginTests(unittest.TestCase):
         """Thomas</saml:AttributeValue></saml:Attribute><saml:Attribute Name="LastName"><saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" """\
         """xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">Schorr</saml:AttributeValue></saml:Attribute><saml:Attribute Name="Email">"""\
         """<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">thomas.schorr@haufe-lexware.com"""\
-        """</saml:AttributeValue></saml:Attribute></saml:AttributeStatement></saml:Assertion></samlp:Response></samlp:ArtifactResponse></soap-env:Body></soap-env:Envelope>"""
+        """</saml:AttributeValue></saml:Attribute></saml:AttributeStatement></saml:Assertion></samlp:Response></samlp:ArtifactResponse></soap-env:Body></soap-env:Envelope>""" % instant()
 
 
     def setUp(self):
