@@ -288,6 +288,7 @@ class SAML2PluginTests(unittest.TestCase):
         self.failUnless(type(creds) == dict, 'unexpected credentials: %s' % creds)
         self.failUnless(creds['login'] == 'thomas.schorr@haufe-lexware.com', 'unexpected credentials: %s' % creds)
         self.failUnless(creds['ssiauth'], 'unexpected credentials: %s' % creds)
+        self.failUnless(not req.form.has_key('SAMLart'), 'artifact should have been deleted from request form')
     
     def test_active(self):
         plugin = self._make_one()
