@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sys
 import os
 import unittest
@@ -50,6 +49,7 @@ class ResponseMock(object):
 
     shared_state = {}
     text = ''
+    encoding = 'utf-8'
 
     def __init__(self, status, request, method=None, **kwargs):
         self.__dict__ = self.shared_state
@@ -92,32 +92,32 @@ class SAML2PluginTests(unittest.TestCase):
         """<ns1:Attribute Name="LastName"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance">Schorr</ns1:AttributeValue></ns1:Attribute>"""\
         """<ns1:Attribute Name="Email"><ns1:AttributeValue ns2:type="xs:string" xmlns:ns2="http://www.w3.org/2001/XMLSchema-instance">thomas.schorr@haufe-lexware.com</ns1:AttributeValue></ns1:Attribute></ns1:AttributeStatement>"""
     soap_artifact_response = \
-        """<soap-env:Envelope xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"><soap-env:Body>"""\
-        """<samlp:ArtifactResponse xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="s2f3c21d52024a3866e44c5f2e2e00e0f28561830a" """\
-        """InResponseTo="id-912c05fb95f9763132f259422bb26113" Version="2.0" IssueInstant="%s" Destination="https://nohost">"""\
-        """<saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">https://nohost/auth</saml:Issuer><samlp:Status xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">"""\
-        """<samlp:StatusCode  xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" Value="urn:oasis:names:tc:SAML:2.0:status:Success"></samlp:StatusCode></samlp:Status>"""\
-        """<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="s284dfd45f100f4a7b1ed1cb25a28ab42e63fc3d0a" InResponseTo="id-80c25be5605f68e2aa4e72660d736d7b" Version="2.0" """\
-        """IssueInstant="2014-04-16T12:04:42Z" Destination="https://nohost"><saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">"""\
-        """https://nohost/auth</saml:Issuer><samlp:Status xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"><samlp:StatusCode  xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" """\
-        """Value="urn:oasis:names:tc:SAML:2.0:status:Success"></samlp:StatusCode></samlp:Status>"""\
-        """<saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" Version="2.0" ID="s208ceb5d27c072d35ca6b2c29211788cb80beea8e" IssueInstant="2014-04-16T12:04:42Z">"""\
-        """<saml:Issuer>https://nohost/auth</saml:Issuer><saml:Subject><saml:NameID NameQualifier="https://nohost/auth" """\
-        """Format="urn:oasis:names:tc:SAML:2.0:nameid-format:transient">3TJes2TmJbwUrxplHOKeFcjty1l7</saml:NameID><saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">"""\
-        """<saml:SubjectConfirmationData NotOnOrAfter="2014-04-16T12:14:42Z" InResponseTo="id-80c25be5605f68e2aa4e72660d736d7b" Recipient="https://nohost" >"""\
-        """</saml:SubjectConfirmationData></saml:SubjectConfirmation></saml:Subject><saml:Conditions NotBefore="2014-04-16T11:54:42Z" NotOnOrAfter="2014-04-16T12:14:42Z">"""\
-        """<saml:AudienceRestriction><saml:Audience>https://nohost/</saml:Audience></saml:AudienceRestriction></saml:Conditions>"""\
-        """<saml:AuthnStatement AuthnInstant="2014-04-15T14:52:34Z" SessionIndex="s2d7759b46741a35f5a93a4deb620ed1468e6dc901"><saml:AuthnContext><saml:AuthnContextClassRef>"""\
-        """urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken</saml:AuthnContextClassRef></saml:AuthnContext></saml:AuthnStatement><saml:AttributeStatement>"""\
-        """<saml:Attribute Name="SSOToken"><saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">"""\
-        """AQIC5wM2LY4Sfczx22Y4ngUTZ7fqv3OG9-3jNcSf2NNqpsE.*AAJTSQACMDIAAlMxAAIwMQ..*</saml:AttributeValue></saml:Attribute><saml:Attribute Name="AuthLevel">"""\
-        """<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">15</saml:AttributeValue></saml:Attribute>"""\
-        """<saml:Attribute Name="Salutation"><saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">"""\
-        """Herr</saml:AttributeValue></saml:Attribute><saml:Attribute Name="FirstName"><saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">"""\
-        """Thomas</saml:AttributeValue></saml:Attribute><saml:Attribute Name="LastName"><saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" """\
-        """xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">Schorr</saml:AttributeValue></saml:Attribute><saml:Attribute Name="Email">"""\
-        """<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">thomas.schorr@haufe-lexware.com"""\
-        """</saml:AttributeValue></saml:Attribute></saml:AttributeStatement></saml:Assertion></samlp:Response></samlp:ArtifactResponse></soap-env:Body></soap-env:Envelope>""" % instant()
+        u"""<soap-env:Envelope xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"><soap-env:Body>"""\
+        u"""<samlp:ArtifactResponse xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="s2f3c21d52024a3866e44c5f2e2e00e0f28561830a" """\
+        u"""InResponseTo="id-912c05fb95f9763132f259422bb26113" Version="2.0" IssueInstant="%s" Destination="https://nohost">"""\
+        u"""<saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">https://nohost/auth</saml:Issuer><samlp:Status xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">"""\
+        u"""<samlp:StatusCode  xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" Value="urn:oasis:names:tc:SAML:2.0:status:Success"></samlp:StatusCode></samlp:Status>"""\
+        u"""<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="s284dfd45f100f4a7b1ed1cb25a28ab42e63fc3d0a" InResponseTo="id-80c25be5605f68e2aa4e72660d736d7b" Version="2.0" """\
+        u"""IssueInstant="2014-04-16T12:04:42Z" Destination="https://nohost"><saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">"""\
+        u"""https://nohost/auth</saml:Issuer><samlp:Status xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"><samlp:StatusCode  xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" """\
+        u"""Value="urn:oasis:names:tc:SAML:2.0:status:Success"></samlp:StatusCode></samlp:Status>"""\
+        u"""<saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" Version="2.0" ID="s208ceb5d27c072d35ca6b2c29211788cb80beea8e" IssueInstant="2014-04-16T12:04:42Z">"""\
+        u"""<saml:Issuer>https://nohost/auth</saml:Issuer><saml:Subject><saml:NameID NameQualifier="https://nohost/auth" """\
+        u"""Format="urn:oasis:names:tc:SAML:2.0:nameid-format:transient">3TJes2TmJbwUrxplHOKeFcjty1l7</saml:NameID><saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">"""\
+        u"""<saml:SubjectConfirmationData NotOnOrAfter="2014-04-16T12:14:42Z" InResponseTo="id-80c25be5605f68e2aa4e72660d736d7b" Recipient="https://nohost" >"""\
+        u"""</saml:SubjectConfirmationData></saml:SubjectConfirmation></saml:Subject><saml:Conditions NotBefore="2014-04-16T11:54:42Z" NotOnOrAfter="2014-04-16T12:14:42Z">"""\
+        u"""<saml:AudienceRestriction><saml:Audience>https://nohost/</saml:Audience></saml:AudienceRestriction></saml:Conditions>"""\
+        u"""<saml:AuthnStatement AuthnInstant="2014-04-15T14:52:34Z" SessionIndex="s2d7759b46741a35f5a93a4deb620ed1468e6dc901"><saml:AuthnContext><saml:AuthnContextClassRef>"""\
+        u"""urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken</saml:AuthnContextClassRef></saml:AuthnContext></saml:AuthnStatement><saml:AttributeStatement>"""\
+        u"""<saml:Attribute Name="SSOToken"><saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">"""\
+        u"""AQIC5wM2LY4Sfczx22Y4ngUTZ7fqv3OG9-3jNcSf2NNqpsE.*AAJTSQACMDIAAlMxAAIwMQ..*</saml:AttributeValue></saml:Attribute><saml:Attribute Name="AuthLevel">"""\
+        u"""<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">15</saml:AttributeValue></saml:Attribute>"""\
+        u"""<saml:Attribute Name="Salutation"><saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">"""\
+        u"""Herr</saml:AttributeValue></saml:Attribute><saml:Attribute Name="FirstName"><saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">"""\
+        u"""M\xe4xi</saml:AttributeValue></saml:Attribute><saml:Attribute Name="LastName"><saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" """\
+        u"""xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">M\xfcller</saml:AttributeValue></saml:Attribute><saml:Attribute Name="Email">"""\
+        u"""<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">thomas.schorr@haufe-lexware.com"""\
+        u"""</saml:AttributeValue></saml:Attribute></saml:AttributeStatement></saml:Assertion></samlp:Response></samlp:ArtifactResponse></soap-env:Body></soap-env:Envelope>""" % instant()
 
 
     def setUp(self):

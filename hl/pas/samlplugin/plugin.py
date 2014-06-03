@@ -241,7 +241,7 @@ class SAML2Plugin(BasePlugin):
             logger.info(r.text)
             if r.status_code == 200:
                 try:
-                    response = scl.parse_artifact_resolve_response(r.text)
+                    response = scl.parse_artifact_resolve_response(r.text.encode(r.encoding))
                     response.attribute_converters = scl.config.attribute_converters
                     response.assertion = response.assertion[0]
                     response.ava = get_identity(response)
