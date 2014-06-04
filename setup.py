@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 def read(*rnames):
     return open(os.path.join(os.path.dirname(__file__), *rnames)).read()
 
-version = '1.1dev'
+version = '1.1'
 
 long_description = (
     read('README.rst')
@@ -37,7 +37,7 @@ setup(name='hl.pas.samlplugin',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License (GPL)',
         ],
-      keywords='',
+      keywords='saml2 zope',
       author='Thomas Schorr',
       author_email='thomas.schorr@haufe-lexware.com',
       url='https://github.com/Haufe-Lexware/hl.pas.samlplugin',

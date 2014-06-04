@@ -1,8 +1,12 @@
 Changelog
 =========
 
-1.1dev (unreleased)
+1.1 (2014-06-04)
 -------------------
+
+- pop SAMLart from request form to prevent endless redirect in certain cases
+- handle artifact response encoding correctly
+- updated keywords
 
 1.0 (2014-04-22)
 -------------------
