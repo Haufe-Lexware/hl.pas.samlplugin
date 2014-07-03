@@ -391,17 +391,39 @@ class SAML2PluginTests(unittest.TestCase):
         """
         plugin = self._make_one()
         req = self._make_request()
-        req['ACTUAL_URL'] = req.SERVER_URL = 'http://nohost/somepath'
+        expected = 'http://nohost/somepath'
+        req['ACTUAL_URL'] = req.SERVER_URL = expected
         qs = 'x=1&y:int=2'
         req.environ['QUERY_STRING'] = qs
         req.form.update({'x':'1', 'y':2})
         plugin.checksession(req)
-        expected = 'http://nohost/somepath'
         session_storedurl_key = plugin.session_storedurl_key
         address, querystring = req.SESSION.get(session_storedurl_key).split('?')
         self.assertEquals(address, expected, 'unexpected stored url in session, expected %s, got %s.' % (expected, address))
         expected = dict([ item.split('=') for item in qs.split('&')])
         paramsOut = dict([ item.split('=') for item in querystring.split('&')])
+        self.assertEquals(paramsOut, expected, 'unexpected querystring in stored url, expected: %s, got: %s' %(expected, paramsOut))
+
+    def test_checksession_passive_with_existing_query(self):
+        """
+        if the actual url already contains a ?, the query must be updated correctly
+        """
+        plugin = self._make_one()
+        req = self._make_request()
+        expected = 'http://nohost/somepath'
+        req['ACTUAL_URL'] = req.SERVER_URL = '%s?foo=bar' % expected
+        qs = 'x=1&y:int=2'
+        req.environ['QUERY_STRING'] = qs
+        req.form.update({'x':'1', 'y':2})
+        plugin.checksession(req)
+        session_storedurl_key = plugin.session_storedurl_key
+        raw = req.SESSION.get(session_storedurl_key).split('?')
+        self.failUnless(len(raw) == 2, 'query string messed up: %s' % raw)
+        address, querystring = raw
+        self.assertEquals(address, expected, 'unexpected stored url in session, expected %s, got %s.' % (expected, address))
+        expected = dict([item.split('=') for item in qs.split('&')])
+        expected.update({'foo':'bar'})
+        paramsOut = dict([item.split('=') for item in querystring.split('&')])
         self.assertEquals(paramsOut, expected, 'unexpected querystring in stored url, expected: %s, got: %s' %(expected, paramsOut))
     
     def test_checksession_passive(self):

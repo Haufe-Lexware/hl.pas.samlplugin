@@ -199,7 +199,16 @@ class SAML2Plugin(BasePlugin):
         if not actual_url.startswith(sp_url):
             # the request was made from within a context we cannot handle
             return None
-        actual_url_with_query = '%s?%s' % (actual_url,  make_query(request.form)) if request.get('REQUEST_METHOD') == 'GET' else actual_url
+        if (request.get('REQUEST_METHOD') == 'GET') and request.form:
+            query = {}
+            query.update(request.form)
+            raw = actual_url.split('?')
+            if len(raw) == 2:
+                actual_url, existing_query = raw
+                query.update([item.split('=') for item in existing_query.split('&')])
+            actual_url_with_query = '%s?%s' % (actual_url,  make_query(query)) if request.get('REQUEST_METHOD') == 'GET' else actual_url
+        else:
+            actual_url_with_query = actual_url
         # Initiate challenge
         if 'SAMLResponse' not in request.form and not session.get(self.session_lock_key, False):
             session.set(self.session_lock_key, True)
