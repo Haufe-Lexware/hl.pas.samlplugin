@@ -14,7 +14,7 @@ from zope.app.container.interfaces import IObjectAddedEvent
 from Products.PluggableAuthService.plugins.BasePlugin import BasePlugin
 from Products.PluggableAuthService.utils import classImplements
 from Products.PluggableAuthService.interfaces.plugins import \
-     IExtractionPlugin, IAuthenticationPlugin, IChallengePlugin, ICredentialsResetPlugin
+     IExtractionPlugin, IAuthenticationPlugin, IChallengePlugin, ICredentialsResetPlugin, IPropertiesPlugin
 from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 from saml2.config import SPConfig
 from saml2 import saml, samlp
@@ -270,6 +270,17 @@ class SAML2Plugin(BasePlugin):
             login = credentials.get('login')
             return (login, login)
 
+    security.declarePrivate('getPropertiesForUser')
+    def getPropertiesForUser(self, user, request=None):
+        """
+        return session data for current user, else an empty dict
+        """
+        result = {}
+        session = request.SESSION
+        if session[self.session_login_key] == user.getId():
+            result.update(session[self.session_user_properties])
+        return result
+
     security.declarePrivate('challenge')
     def challenge(self, request, response, **kw):
         resp = request['RESPONSE']
@@ -407,6 +418,7 @@ classImplements(SAML2Plugin,
                 IAuthenticationPlugin,
                 IChallengePlugin,
                 ICredentialsResetPlugin,
+                IPropertiesPlugin,
                 # SAML interfaces
                 ISAMLLogoutHandler,
                 ISAMLAttributeProvider,

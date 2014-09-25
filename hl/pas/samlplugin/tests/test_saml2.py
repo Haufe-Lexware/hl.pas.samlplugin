@@ -1,15 +1,10 @@
-import sys
 import os
 import unittest
-import sgmllib
 import base64
 import urllib
 import requests
 from datetime import datetime, timedelta
 from cStringIO import StringIO
-from UserDict import UserDict
-from ZPublisher.HTTPRequest import HTTPRequest
-from ZPublisher.HTTPResponse import HTTPResponse
 from zope.interface.verify import verifyObject
 from saml2.saml import Issuer, Assertion
 from saml2.saml import Subject, NameID, SubjectConfirmation, SubjectConfirmationData
@@ -25,41 +20,11 @@ from saml2.sigver import pre_signature_part, SecurityContext, CryptoBackendXmlSe
 from saml2.s_utils import decode_base64_and_inflate, deflate_and_base64_encode
 from saml2.time_util import instant
 from hl.pas.samlplugin.interfaces import ISAMLLogoutHandler, ISAMLAttributeProvider, ISAMLSessionCheck
+from .mocks import ResponseMock
+from .base import SAMLPluginTestsBase
 
 
-path = os.path.dirname(__file__)
-
-
-class SessionMock(UserDict):
-
-    id = 'dummy'
-
-    def set(self, k, v):
-        self[k] = v
-
-    def __getitem__(self, k, default=None):
-        if self.has_key(k):
-            return UserDict.__getitem__(self, k)
-        return default
-
-    delete = UserDict.__delitem__
-
-
-class ResponseMock(object):
-
-    shared_state = {}
-    text = ''
-    encoding = 'utf-8'
-
-    def __init__(self, status, request, method=None, **kwargs):
-        self.__dict__ = self.shared_state
-        self.code = self.status_code = status
-        self.request = request 
-        self.method = method
-        self.kwargs = kwargs
-
-
-class SAML2PluginTests(unittest.TestCase):
+class SAML2PluginTests(SAMLPluginTestsBase):
 
     session_index = 's24d8e3c95e92e861f791016d32f92a8e588686101'
     attribute_xml = \
@@ -108,35 +73,6 @@ class SAML2PluginTests(unittest.TestCase):
     def tearDown(self):
         urllib.urlopen = self._stored_urlopen
         requests.request = self._stored_request
-
-    def _get_target_class(self):
-        from hl.pas.samlplugin.plugin import SAML2Plugin
-        return SAML2Plugin
-
-
-    def _make_one(self):
-        o = self._get_target_class()('saml2')
-        o.saml2_user_properties = ('FirstName', 'LastName', 'Email')
-        o.saml2_idp_configfile = os.path.join(path, 'data', 'idp.xml')
-        o.saml2_sp_url = 'http://nohost/'
-        o.saml2_sp_entityid = 'http://nohost/'
-        o.saml2_xmlsec = '/usr/bin/xmlsec1'
-        o.saml2_login_attribute = 'Email'
-        return o
-
-
-    def _make_request(self):
-        environ = {}
-        environ['SERVER_NAME'] = 'foo'
-        environ['SERVER_PORT'] = '80'
-        environ['REQUEST_METHOD'] = 'GET'
-        resp = HTTPResponse(stdout=sys.stdout)
-        req = HTTPRequest(stdin=file, environ=environ, response=resp)
-        session = SessionMock()
-        req.other['SESSION'] = session
-        req['ACTUAL_URL'] = 'http://nohost/'
-        return req
-
 
     def _parse_authn_request(self, enc_request):
         """
@@ -207,10 +143,9 @@ class SAML2PluginTests(unittest.TestCase):
         response = '%s' % response
         # Sign assertion in the response
         xmlsec = CryptoBackendXmlSec1(os.environ.get('SAML2_XMLSEC', '/usr/bin/xmlsec1'))
-        seccont = SecurityContext(xmlsec, key_file=os.path.join(path, 'data', 'test.key'))
+        seccont = SecurityContext(xmlsec, key_file=os.path.join(self.path, 'data', 'test.key'))
         signed_response = seccont.sign_statement(response, 'urn:oasis:names:tc:SAML:2.0:protocol:Response')
         return signed_response
-
     
     def test_authenticate(self):
         creds = {'ssiauth':True, 'login':'thomas.schorr@haufe-lexware.com'}
