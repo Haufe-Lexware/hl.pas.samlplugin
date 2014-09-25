@@ -59,27 +59,6 @@ class ResponseMock(object):
         self.kwargs = kwargs
 
 
-class FormParser(sgmllib.SGMLParser):
-
-    def __init__(self, verbose=0):
-        sgmllib.SGMLParser.__init__(self, verbose)
-        self.inputs = {}
-
-    def parse(self, s):
-        self.feed(s)
-        self.close()
-
-    def start_input(self, attributes):
-        name = value = None
-        for attr_key, attr_value in attributes:
-            if attr_key == 'name':
-                name = attr_value
-            if attr_key == 'value':
-                value = attr_value
-        if name is not None and value is not None:
-            self.inputs[name] = value
-
-
 class SAML2PluginTests(unittest.TestCase):
 
     session_index = 's24d8e3c95e92e861f791016d32f92a8e588686101'
