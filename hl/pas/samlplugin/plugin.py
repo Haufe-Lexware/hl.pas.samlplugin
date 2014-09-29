@@ -276,8 +276,10 @@ class SAML2Plugin(BasePlugin):
         return session data for current user, else an empty dict
         """
         result = {}
+        if request is None:
+            request = self.REQUEST
         session = request.SESSION
-        if session[self.session_login_key] == user.getId():
+        if session.get(self.session_login_key) == user.getId():
             result.update(session[self.session_user_properties])
         return result
 
