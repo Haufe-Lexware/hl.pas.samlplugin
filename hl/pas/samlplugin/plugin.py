@@ -159,9 +159,11 @@ class SAML2Plugin(BasePlugin):
         super(SAML2Plugin, self)._setPropValue(id, value)
         self._v_config = None
 
-    def _authn_context(self):
-        if self.saml2_authn_context_class != 'do not specify':
-            return  samlp.requested_authn_context_from_string(self._authn_context_template.format(context_class=self.saml2_authn_context_class))
+    def _authn_context(self, authn_context_class=None):
+        if authn_context_class is None:
+            authn_context_class = self.saml2_authn_context_class
+        if authn_context_class != 'do not specify':
+            return  samlp.requested_authn_context_from_string(self._authn_context_template.format(context_class=authn_context_class))
 
     def _setup_local_session(self, session, scl, session_info):
         creds = {}
@@ -185,7 +187,7 @@ class SAML2Plugin(BasePlugin):
         return self.passive(request)
 
     security.declareProtected(view, 'passive')
-    def passive(self, request):
+    def passive(self, request, authn_context_class=None):
         session = request.SESSION
         if session.get(self.session_auth_key, False):
             session.set(self.session_lock_key, False)
@@ -213,7 +215,7 @@ class SAML2Plugin(BasePlugin):
         if 'SAMLResponse' not in request.form and not session.get(self.session_lock_key, False):
             session.set(self.session_lock_key, True)
             logger.info('ACTUAL_URL: %s' % actual_url)
-            (sid, result) = scl.authenticate(entityid, binding=BINDING_HTTP_REDIRECT, is_passive='true', requested_authn_context=self._authn_context(), service_url_binding=self.saml2_service_url_binding,)
+            (sid, result) = scl.authenticate(entityid, binding=BINDING_HTTP_REDIRECT, is_passive='true', requested_authn_context=self._authn_context(authn_context_class), service_url_binding=self.saml2_service_url_binding,)
             #session.set(self.session_sessid, {sid:''})
             session.set(self.session_storedurl_key, actual_url_with_query)
             headers = dict(result['headers'])
@@ -323,7 +325,7 @@ class SAML2Plugin(BasePlugin):
         return True
 
     security.declareProtected(view, 'active')
-    def active(self, request):
+    def active(self, request, authn_context_class=None):
         """
         we re-extract credentials from the SAML2 service, but with is_pasive=False to initiate a 
         redirect to the login page if no SSI session exists.
@@ -342,7 +344,7 @@ class SAML2Plugin(BasePlugin):
         # Initiate challenge
         scl = Saml2Client(config)
         # if we have an existing SSI session, continue in extractCredentials, otherwise redirect to SAML2 login
-        (sid, result) = scl.authenticate(entityid, binding=BINDING_HTTP_REDIRECT, requested_authn_context=self._authn_context())
+        (sid, result) = scl.authenticate(entityid, binding=BINDING_HTTP_REDIRECT, requested_authn_context=self._authn_context(authn_context_class))
         session.set(self.session_sessid, {sid:''})
         headers = dict(result['headers'])
         for k, v in headers.items():
@@ -351,11 +353,11 @@ class SAML2Plugin(BasePlugin):
         return True
 
     security.declareProtected(view, 'checksession')
-    def checksession(self, request):
+    def checksession(self, request, authn_context_class=None):
         session = request.SESSION
         session.set(self.session_auth_key, False)
         session.set(self.session_lock_key, False)
-        return self.passive(request)
+        return self.passive(request, authn_context_class=authn_context_class)
 
     security.declareProtected(view, 'slo')
     def slo(self, request):

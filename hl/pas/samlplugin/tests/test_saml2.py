@@ -6,19 +6,19 @@ import requests
 from datetime import datetime, timedelta
 from cStringIO import StringIO
 from zope.interface.verify import verifyObject
-from saml2.saml import Issuer, Assertion
-from saml2.saml import Subject, NameID, SubjectConfirmation, SubjectConfirmationData
-from saml2.saml import Conditions, AudienceRestriction, Audience, OneTimeUse
-from saml2.saml import AuthnStatement, AuthnContext, AuthnContextClassRef
-from saml2.saml import attribute_statement_from_string
-from saml2.saml import NAMEID_FORMAT_TRANSIENT, SCM_BEARER
-from saml2.saml import NAMEID_FORMAT_ENTITY
-from saml2.samlp import Response, Status, StatusCode
-from saml2.samlp import STATUS_SUCCESS
-from saml2.samlp import authn_request_from_string, logout_request_from_string, logout_response_from_string
-from saml2.sigver import pre_signature_part, SecurityContext, CryptoBackendXmlSec1
-from saml2.s_utils import decode_base64_and_inflate, deflate_and_base64_encode
-from saml2.time_util import instant
+from hl.pas.samlplugin.saml2.saml import Issuer, Assertion
+from hl.pas.samlplugin.saml2.saml import Subject, NameID, SubjectConfirmation, SubjectConfirmationData
+from hl.pas.samlplugin.saml2.saml import Conditions, AudienceRestriction, Audience, OneTimeUse
+from hl.pas.samlplugin.saml2.saml import AuthnStatement, AuthnContext, AuthnContextClassRef
+from hl.pas.samlplugin.saml2.saml import attribute_statement_from_string
+from hl.pas.samlplugin.saml2.saml import NAMEID_FORMAT_TRANSIENT, SCM_BEARER
+from hl.pas.samlplugin.saml2.saml import NAMEID_FORMAT_ENTITY
+from hl.pas.samlplugin.saml2.samlp import Response, Status, StatusCode
+from hl.pas.samlplugin.saml2.samlp import STATUS_SUCCESS
+from hl.pas.samlplugin.saml2.samlp import authn_request_from_string, logout_request_from_string, logout_response_from_string
+from hl.pas.samlplugin.saml2.sigver import pre_signature_part, SecurityContext, CryptoBackendXmlSec1
+from hl.pas.samlplugin.saml2.s_utils import decode_base64_and_inflate, deflate_and_base64_encode
+from hl.pas.samlplugin.saml2.time_util import instant
 from hl.pas.samlplugin.interfaces import ISAMLLogoutHandler, ISAMLAttributeProvider, ISAMLSessionCheck
 from .mocks import ResponseMock
 from .base import SAMLPluginTestsBase
@@ -378,6 +378,26 @@ class SAML2PluginTests(SAMLPluginTestsBase):
                 self.failUnless(len(request.requested_authn_context.authn_context_class_ref) == 1, 'bogus request: %s' % request.requested_authn_context.to_string())
                 got = request.requested_authn_context.authn_context_class_ref[0].text
                 self.failUnless(got == ac, 'unexpected authn context class - got %s, expected %s.' % (got, ac))
+
+    def test_user_provided_authn_context(self):
+        plugin = self._make_one()
+        possible_authn_contexts = (None, 'PasswordProtectedTransport', 'PreviousSession', 'TimeSyncToken')
+        for method in (plugin.active, plugin.passive, plugin.checksession):
+            for ac in possible_authn_contexts:
+                req = self._make_request()
+                resp = req.response
+                method(req, authn_context_class=ac)
+                get = resp.getHeader('location')
+                urlvars = {}
+                urlvars.update([tuple(get.split('?')[1].split('='))])
+                saml_request = urlvars.get('SAMLRequest', '')
+                request = self._parse_authn_request(saml_request)
+                if ac == None:
+                    self.failUnless(request.requested_authn_context is None, 'bogus request: %s' % request.to_string())
+                    continue
+                    self.failUnless(len(request.requested_authn_context.authn_context_class_ref) == 1, 'bogus request: %s' % request.requested_authn_context.to_string())
+                    got = request.requested_authn_context.authn_context_class_ref[0].text
+                    self.failUnless(got.split('.')[-1] == ac, 'unexpected authn context class - got %s, expected %s.' % (got, ac))
 
     def test_interfaces(self):
         """

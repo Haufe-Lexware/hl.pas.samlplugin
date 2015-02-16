@@ -12,7 +12,7 @@ Installation
 ============
 
 1. Add the package to your buildout.
-2. Run buildout. ``hl.pas.samlplugin`` will pull in `pysaml2 <http://pypi.python.org/pypi/pysaml2/0.4.2>`__, 
+2. Run buildout. ``hl.pas.samlplugin`` will pull in `pysaml2 <http://pypi.python.org/pypi/pysaml2/1.0.2>`__, 
    which in turn needs xmlsec and repoze.who. xmlsec has to be installed manually, please refer to the pysaml2 
    documentation.
 3. Restart Zope.
