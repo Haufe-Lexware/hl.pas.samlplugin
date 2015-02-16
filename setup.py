@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-This module contains the tool of hl.pas.samlplugin
-"""
 import os
 from setuptools import setup, find_packages
 
@@ -35,22 +32,23 @@ setup(name='hl.pas.samlplugin',
       classifiers=[
         'Framework :: Zope2',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'License :: OSI Approved :: Apache Software License',
         ],
       keywords='saml2 zope',
       author='Thomas Schorr',
       author_email='thomas.schorr@haufe-lexware.com',
       url='https://github.com/Haufe-Lexware/hl.pas.samlplugin',
-      license='GPL',
+      license='Apache 2.0',
       packages=find_packages(exclude=['ez_setup']),
       namespace_packages=['hl', 'hl.pas'],
       include_package_data=True,
       zip_safe=False,
       install_requires=['setuptools',
                         # -*- Extra requirements: -*-
-                        'pysaml2==1.0.2',
                         'zope.app.container',
                         'Products.PluggableAuthService',
+                        'requests',
+                        'M2Crypto',
                         ],
       tests_require=tests_require,
       extras_require=dict(tests=tests_require),
