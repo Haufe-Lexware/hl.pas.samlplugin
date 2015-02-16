@@ -1,6 +1,11 @@
 Introduction
 ============
 
+.. image:: https://secure.travis-ci.org/Haufe-Lexware/hl.pas.samlplugin.png
+    :target: http://travis-ci.org/Haufe-Lexware/hl.pas.samlplugin
+
+.. contents::
+
 ``hl.pas.samlplugin`` provides a SAML2 plugin for Zope's `PluggableAuthService 
 <http://pypi.python.org/pypi/Products.PluggableAuthService>`__. It provides 
 the IExtractionPlugin, IAuthenticationPlugin, IChallengePlugin, ICredentialsResetPlugin
@@ -12,9 +17,8 @@ Installation
 ============
 
 1. Add the package to your buildout.
-2. Run buildout. ``hl.pas.samlplugin`` will pull in `pysaml2 <http://pypi.python.org/pypi/pysaml2/1.0.2>`__, 
-   which in turn needs xmlsec and repoze.who. xmlsec has to be installed manually, please refer to the pysaml2 
-   documentation.
+2. Install `xmlsec<https://www.aleksey.com/xmlsec/>`__ 
+3. Run buildout.
 3. Restart Zope.
 4. Visit your site's Pluggable Auth Service in ZMI and add a SAML2 PAS plugin
 
@@ -53,7 +57,7 @@ On the SAML2 PAS plugins' properties tab, you will need to specify some more pro
 - the service endpoint entity id as given to the IDP
 - the AuthnContextClass to use with the authentication request
 - the service URL binding to use for the passive session check
-- the absolute path to the xmlsec executable (s. pysaml2 documentation)
+- the absolute path to the xmlsec executable
 - the attribute provided by the IDP that should be used as the users login attribute (i.e. the user id used by Zope)
 - additional user properties given by the IDP that should be stored in the users session
 

@@ -4,6 +4,9 @@ Changelog
 1.2dev (unreleased)
 -------------------
 
+- added parts of the pysaml2 library (https://github.com/rohe/pysaml2) in subdirectory "saml2" to fix dependency issues with repoze.who and current Zope versions
+- changed license from GPL to Apache 2.0
+- the "passive", "active" and "checksession" methods now take an optional parameter to override the default AuthnContextClass (from properties) on a per request basis
 
 1.1 (2014-06-04)
 -------------------
