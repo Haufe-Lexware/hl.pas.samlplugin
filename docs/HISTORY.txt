@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.2dev (unreleased)
+1.2 (2015-02-24)
 -------------------
 
 - added parts of the pysaml2 library (https://github.com/rohe/pysaml2) in subdirectory "saml2" to fix dependency issues with repoze.who and current Zope versions
