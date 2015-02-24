@@ -4,9 +4,13 @@ Introduction
 .. image:: https://secure.travis-ci.org/Haufe-Lexware/hl.pas.samlplugin.png
     :target: http://travis-ci.org/Haufe-Lexware/hl.pas.samlplugin
 
+.. image:: https://pypip.in/v/hl.pas.samlplugin/badge.png
+    :target: https://pypi.python.org/pypi/hl.pas.samlplugin^/
+    :alt: Latest Version
+
 .. contents::
 
-``hl.pas.samlplugin`` provides a SAML2 plugin for Zope's `PluggableAuthService 
+``hl.pas.samlplugin`` provides a SAML2 plugin for Zope's `PluggableAuthService
 <http://pypi.python.org/pypi/Products.PluggableAuthService>`__. It provides 
 the IExtractionPlugin, IAuthenticationPlugin, IChallengePlugin, ICredentialsResetPlugin
 interfaces.
@@ -16,11 +20,11 @@ interfaces.
 Installation
 ============
 
-1. Add the package to your buildout.
-2. Install `xmlsec<https://www.aleksey.com/xmlsec/>`__ 
-3. Run buildout.
-3. Restart Zope.
-4. Visit your site's Pluggable Auth Service in ZMI and add a SAML2 PAS plugin
+#. Add the package to your buildout
+#. Install `xmlsec <https://www.aleksey.com/xmlsec/>`__
+#. Run buildout
+#. Restart Zope
+#. Visit your site's Pluggable Auth Service in ZMI and add a SAML2 PAS plugin
 
 Configuration
 =============
@@ -67,3 +71,8 @@ for a CMFSite.
 It seems important to note that this PAS plugin (and the SAML2 protocol) only provides authentication. It is rather likely 
 that you will have to implement your own plugins to provide the IPropertiesPlugin and the IUserEnumerationPlugin interfaces, 
 at least if you have to deal with user generated content or want to use the Zope CMF.
+
+Credits
+=======
+
+Most of the code in the saml2 subfolder was taken from the `pysaml2 <https://pypi.python.org/pypi/pysaml2/1.0.2>`__ package.
