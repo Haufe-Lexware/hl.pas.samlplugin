@@ -340,6 +340,17 @@ class SAML2PluginTests(SAMLPluginTestsBase):
         paramsOut = dict([item.split('=') for item in querystring.split('&')])
         self.assertEquals(paramsOut, expected, 'unexpected querystring in stored url, expected: %s, got: %s' %(expected, paramsOut))
     
+    def test_checksession_passive_with_invalid_query_string(self):
+        """
+        if the actual url already contains e.g. only a ?
+        """
+        plugin = self._make_one()
+        req = self._make_request()
+        expected = 'http://nohost/somepath'
+        req.form.update({'x':'1', 'y':2})
+        req['ACTUAL_URL'] = req.SERVER_URL = '%s?' % expected
+        plugin.checksession(req)
+
     def test_checksession_passive(self):
         """
         should be the same as extractCredentials

@@ -205,7 +205,7 @@ class SAML2Plugin(BasePlugin):
             query = {}
             query.update(request.form)
             raw = actual_url.split('?')
-            if len(raw) == 2:
+            if (len(raw) == 2) and ('=' in raw[1]):
                 actual_url, existing_query = raw
                 query.update([item.split('=') for item in existing_query.split('&')])
             actual_url_with_query = '%s?%s' % (actual_url,  make_query(query)) if request.get('REQUEST_METHOD') == 'GET' else actual_url
