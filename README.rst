@@ -4,7 +4,7 @@ Introduction
 .. image:: https://secure.travis-ci.org/Haufe-Lexware/hl.pas.samlplugin.png
     :target: http://travis-ci.org/Haufe-Lexware/hl.pas.samlplugin
 
-.. image:: https://pypip.in/v/hl.pas.samlplugin/badge.png
+.. image:: https://img.shields.io/pypi/v/hl.pas.samlplugin.svg
     :target: https://pypi.python.org/pypi/hl.pas.samlplugin/
     :alt: Latest Version
 
