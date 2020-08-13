@@ -382,8 +382,8 @@ def cert_from_instance(instance):
     return []
 
 # =============================================================================
-from M2Crypto.__m2crypto import bn_to_mpi
-from M2Crypto.__m2crypto import hex_to_bn
+from M2Crypto.m2 import bn_to_mpi
+from M2Crypto.m2 import hex_to_bn
 
 
 def intarr2long(arr):
