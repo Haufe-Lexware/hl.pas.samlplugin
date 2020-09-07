@@ -20,7 +20,7 @@ Contains a class that can do SAML ECP Authentication for other python
 programs.
 """
 
-import cookielib
+import http.cookiejar
 import logging
 
 from saml2 import soap
@@ -95,7 +95,7 @@ class Client(Entity):
         self.cookie_handler = None
 
         self.done_ecp = False
-        self.cookie_jar = cookielib.LWPCookieJar()
+        self.cookie_jar = http.cookiejar.LWPCookieJar()
 
     def phase2(self, authn_request, rc_url, idp_entity_id, headers=None,
                sign=False, **kwargs):
@@ -224,7 +224,7 @@ class Client(Entity):
             # url I started off with.
             pass
         else:
-            print response.error
+            print(response.error)
             raise Exception(
                 "Error POSTing package to SP: %s" % response.error)
 

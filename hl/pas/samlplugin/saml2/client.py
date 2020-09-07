@@ -20,7 +20,7 @@ to conclude its tasks.
 """
 from .request import LogoutRequest
 
-import saml
+from . import saml
 from hl.pas.samlplugin.saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST, BINDING_SOAP
 
 from .ident import decode
@@ -39,7 +39,7 @@ from .client_base import NoServiceDefined
 from .mdstore import destinations
 
 try:
-    from urlparse import parse_qs
+    from urllib.parse import parse_qs
 except ImportError:
     # Compatibility with Python <= 2.5
     from cgi import parse_qs
@@ -103,7 +103,7 @@ class Saml2Client(Base):
             conversation. 
         """
 
-        if isinstance(name_id, basestring):
+        if isinstance(name_id, str):
             name_id = decode(name_id)
 
         logger.info("logout request for: %s" % name_id)
@@ -311,7 +311,7 @@ class Saml2Client(Base):
             raise NoServiceDefined("%s: %s" % (entity_id,
                                                "assertion_id_request_service"))
 
-        if isinstance(assertion_ids, basestring):
+        if isinstance(assertion_ids, str):
             assertion_ids = [assertion_ids]
 
         _id_refs = [AssertionIDRef(_id) for _id in assertion_ids]

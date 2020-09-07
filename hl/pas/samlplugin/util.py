@@ -1,5 +1,5 @@
 import logging
-from saml2.attribute_converter import to_local
+from .saml2.attribute_converter import to_local
 
 logger = logging.getLogger('hl.pas.samlplugin')
 

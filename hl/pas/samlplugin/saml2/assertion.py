@@ -19,9 +19,9 @@ import logging
 
 import re
 from .saml import NAME_FORMAT_URI
-import xmlenc
+from . import xmlenc
 
-import saml
+from . import saml
 
 from .time_util import instant, in_a_while
 from .attribute_converter import from_local
@@ -45,7 +45,7 @@ def _filter_values(vals, vlist=None, must=False):
     if not vlist:  # No value specified equals any value
         return vals
     
-    if isinstance(vlist, basestring):
+    if isinstance(vlist, str):
         vlist = [vlist]
         
     res = []
@@ -71,7 +71,7 @@ def _match(attr, ava):
     if _la in ava:
         return _la
 
-    for _at in ava.keys():
+    for _at in list(ava.keys()):
         if _at.lower() == _la:
             return _at
 
@@ -149,9 +149,9 @@ def filter_on_demands(ava, required=None, optional=None):
     if required is None:
         required = {}
 
-    lava = dict([(k.lower(), k) for k in ava.keys()])
+    lava = dict([(k.lower(), k) for k in list(ava.keys())])
 
-    for attr, vals in required.items():
+    for attr, vals in list(required.items()):
         attr = attr.lower()
         if attr in lava:
             if vals:
@@ -166,12 +166,12 @@ def filter_on_demands(ava, required=None, optional=None):
     if optional is None:
         optional = {}
 
-    oka = [k.lower() for k in required.keys()]
-    oka.extend([k.lower() for k in optional.keys()])
+    oka = [k.lower() for k in list(required.keys())]
+    oka.extend([k.lower() for k in list(optional.keys())])
 
     # OK, so I can imaging releasing values that are not absolutely necessary
     # but not attributes that are not asked for.
-    for attr in lava.keys():
+    for attr in list(lava.keys()):
         if attr not in oka:
             del ava[lava[attr]]
     
@@ -195,7 +195,7 @@ def filter_on_wire_representation(ava, acs, required=None, optional=None):
         optional = []
 
     res = {}
-    for attr, val in ava.items():
+    for attr, val in list(ava.items()):
         done = False
         for req in required:
             try:
@@ -233,7 +233,7 @@ def filter_attribute_value_assertions(ava, attribute_restrictions=None):
     if not attribute_restrictions:
         return ava
     
-    for attr, vals in ava.items():
+    for attr, vals in list(ava.items()):
         _attr = attr.lower()
         try:
             _rests = attribute_restrictions[_attr]
@@ -242,7 +242,7 @@ def filter_attribute_value_assertions(ava, attribute_restrictions=None):
         else:
             if _rests is None:
                 continue
-            if isinstance(vals, basestring):
+            if isinstance(vals, str):
                 vals = [vals]
             rvals = []
             for restr in _rests:
@@ -293,7 +293,7 @@ class Policy(object):
         
         self._restrictions = restrictions.copy()
         
-        for who, spec in self._restrictions.items():
+        for who, spec in list(self._restrictions.items()):
             if spec is None:
                 continue
             try:
@@ -306,7 +306,7 @@ class Policy(object):
                     _mod = importlib.import_module(
                         "saml2.entity_category.%s" % cat)
                     _ec = {}
-                    for key, items in _mod.RELEASE.items():
+                    for key, items in list(_mod.RELEASE.items()):
                         _ec[key] = [k.lower() for k in items]
                     ecs.append(_ec)
                 spec["entity_categories"] = ecs
@@ -319,7 +319,7 @@ class Policy(object):
                 continue
 
             _are = {}
-            for key, values in restr.items():
+            for key, values in list(restr.items()):
                 if not values:
                     _are[key.lower()] = None
                     continue

@@ -20,8 +20,8 @@ import sys
 from importlib import import_module
 
 from .s_utils import factory, do_ava
-import saml
-from hl.pas.samlplugin.saml2 import  extension_elements_to_elements
+from . import saml
+from hl.pas.samlplugin.saml2 import extension_elements_to_elements
 from .saml import NAME_FORMAT_URI
 
 
@@ -44,7 +44,7 @@ def load_maps(dirspec):
     for fil in os.listdir(dirspec):
         if fil.endswith(".py"):
             mod = import_module(fil[:-3])
-            for key, item in mod.__dict__.items():
+            for key, item in list(mod.__dict__.items()):
                 if key.startswith("__"):
                     continue
                 if isinstance(item, dict) and "to" in item and "fro" in item:
@@ -69,7 +69,7 @@ def ac_factory(path=""):
         for fil in os.listdir(path):
             if fil.endswith(".py"):
                 mod = import_module(fil[:-3])
-                for key, item in mod.__dict__.items():
+                for key, item in list(mod.__dict__.items()):
                     if key.startswith("__"):
                         continue
                     if isinstance(item,
@@ -80,7 +80,7 @@ def ac_factory(path=""):
     else:
         for typ in ["basic", "saml_uri", "shibboleth_uri"]:
             mod = import_module(".%s" % typ, "hl.pas.samlplugin.saml2.attributemaps")
-            for key, item in mod.__dict__.items():
+            for key, item in list(mod.__dict__.items()):
                 if key.startswith("__"):
                     continue
                 if isinstance(item, dict) and "to" in item and "fro" in item:
@@ -202,10 +202,10 @@ class AttributeConverter(object):
 
         if self._fro is None and self._to is not None:
             self._fro = dict(
-                [(value.lower(), key) for key, value in self._to.items()])
+                [(value.lower(), key) for key, value in list(self._to.items())])
         if self._to is None and self.fro is not None:
             self._to = dict(
-                [(value.lower, key) for key, value in self._fro.items()])
+                [(value.lower, key) for key, value in list(self._fro.items())])
 
     def from_dict(self, mapdict):
         """ Import the attribute map from  a dictionary
@@ -216,11 +216,11 @@ class AttributeConverter(object):
         self.name_format = mapdict["identifier"]
         try:
             self._fro = dict(
-                [(k.lower(), v) for k, v in mapdict["fro"].items()])
+                [(k.lower(), v) for k, v in list(mapdict["fro"].items())])
         except KeyError:
             pass
         try:
-            self._to = dict([(k.lower(), v) for k, v in mapdict["to"].items()])
+            self._to = dict([(k.lower(), v) for k, v in list(mapdict["to"].items())])
         except KeyError:
             pass
 
@@ -263,7 +263,7 @@ class AttributeConverter(object):
                                                      [saml])
                 for ex in ext:
                     cval = {}
-                    for key, (name, typ, mul) in ex.c_attributes.items():
+                    for key, (name, typ, mul) in list(ex.c_attributes.items()):
                         exv = getattr(ex, name)
                         if exv:
                             cval[name] = exv
@@ -363,7 +363,7 @@ class AttributeConverter(object):
         :return: A list of Attribute instances
         """
         attributes = []
-        for key, value in attrvals.items():
+        for key, value in list(attrvals.items()):
             key = key.lower()
             try:
                 attributes.append(factory(saml.Attribute,
@@ -392,7 +392,7 @@ class AttributeConverterNOOP(AttributeConverter):
         :return: A list of Attribute instances
         """
         attributes = []
-        for key, value in attrvals.items():
+        for key, value in list(attrvals.items()):
             key = key.lower()
             attributes.append(factory(saml.Attribute,
                                       name=key,

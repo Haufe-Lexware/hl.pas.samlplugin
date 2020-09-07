@@ -26,16 +26,16 @@ import logging
 import random
 import os
 from time import mktime
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import M2Crypto
 from M2Crypto.X509 import load_cert_string
 from .samlp import Response
 
-import xmldsig as ds
+from . import xmldsig as ds
 
-import samlp
+from . import samlp
 from hl.pas.samlplugin.saml2 import class_name
-import saml
+from . import saml
 from hl.pas.samlplugin.saml2 import ExtensionElement, VERSION
 
 from .s_utils import sid
@@ -56,7 +56,7 @@ RSA_SHA1 = "http://www.w3.org/2000/09/xmldsig#rsa-sha1"
 
 
 def signed(item):
-    if SIG in item.c_children.keys() and item.signature:
+    if SIG in list(item.c_children.keys()) and item.signature:
         return True
     else:
         for prop in item.c_child_order:
@@ -189,7 +189,7 @@ def _make_vals(val, klass, seccont, klass_inst=None, prop=None, part=False,
 def _instance(klass, ava, seccont, base64encode=False, elements_to_sign=None):
     instance = klass()
 
-    for prop in instance.c_attributes.values():
+    for prop in list(instance.c_attributes.values()):
     #print "# %s" % (prop)
         if prop in ava:
             if isinstance(ava[prop], bool):
@@ -202,7 +202,7 @@ def _instance(klass, ava, seccont, base64encode=False, elements_to_sign=None):
     if "text" in ava:
         instance.set_text(ava["text"], base64encode)
 
-    for prop, klassdef in instance.c_children.values():
+    for prop, klassdef in list(instance.c_children.values()):
         #print "## %s, %s" % (prop, klassdef)
         if prop in ava:
             #print "### %s" % ava[prop]
@@ -222,7 +222,7 @@ def _instance(klass, ava, seccont, base64encode=False, elements_to_sign=None):
                 ExtensionElement(item["tag"]).loadd(item))
 
     if "extension_attributes" in ava:
-        for key, val in ava["extension_attributes"].items():
+        for key, val in list(ava["extension_attributes"].items()):
             instance.extension_attributes[key] = val
 
     if "signature" in ava:
@@ -387,7 +387,7 @@ from M2Crypto.m2 import hex_to_bn
 
 
 def intarr2long(arr):
-    return long(''.join(["%02x" % byte for byte in arr]), 16)
+    return int(''.join(["%02x" % byte for byte in arr]), 16)
 
 
 def dehexlify(bi):
@@ -506,7 +506,7 @@ class RSASigner(Signer):
     def verify(self, msg, sig, key):
         try:
             return key.verify(self.digest(msg), sig, self.algo)
-        except M2Crypto.RSA.RSAError, e:
+        except M2Crypto.RSA.RSAError as e:
             raise BadSignature(e)
 
 
@@ -534,7 +534,7 @@ def verify_redirect_signature(info, cert):
         signer = RSASigner(sha1_digest, "sha1")
         args = info.copy()
         del args["Signature"]  # everything but the signature
-        string = "&".join([urllib.urlencode({k: args[k][0]}) for k in _order])
+        string = "&".join([urllib.parse.urlencode({k: args[k][0]}) for k in _order])
         _key = x509_rsa_loads(pem_format(cert))
         _sign = base64.b64decode(info["Signature"][0])
         try:
@@ -621,7 +621,7 @@ class CryptoBackendXmlSec1(CryptoBackend):
 
     def __init__(self, xmlsec_binary, **kwargs):
         CryptoBackend.__init__(self, **kwargs)
-        assert (isinstance(xmlsec_binary, basestring))
+        assert (isinstance(xmlsec_binary, str))
         self.xmlsec = xmlsec_binary
 
     def version(self):
@@ -723,15 +723,15 @@ class CryptoBackendXmlSec1(CryptoBackend):
 
         if self.__DEBUG:
             try:
-                print " ".join(com_list)
+                print(" ".join(com_list))
             except TypeError:
-                print "cert_type", cert_type
-                print "cert_file", cert_file
-                print "node_name", node_name
-                print "fil", fil
+                print("cert_type", cert_type)
+                print("cert_file", cert_file)
+                print("node_name", node_name)
+                print("fil", fil)
                 raise
-            print "%s: %s" % (cert_file, os.access(cert_file, os.F_OK))
-            print "%s: %s" % (fil, os.access(fil, os.F_OK))
+            print("%s: %s" % (cert_file, os.access(cert_file, os.F_OK)))
+            print("%s: %s" % (fil, os.access(fil, os.F_OK)))
 
         (_stdout, stderr, _output) = self._run_xmlsec(com_list, [fil],
                                                       exception=SignatureError)
@@ -761,7 +761,7 @@ class CryptoBackendXmlSec1(CryptoBackend):
         try:
             if validate_output:
                 parse_xmlsec_output(p_err)
-        except XmlsecError, exc:
+        except XmlsecError as exc:
             logger.error(LOG_LINE_2 % (p_out, p_err, exc))
             raise exception("%s" % (exc,))
 
@@ -980,7 +980,7 @@ class SecurityContext(object):
                 _certs = []
             certs = []
             for cert in _certs:
-                if isinstance(cert, basestring):
+                if isinstance(cert, str):
                     certs.append(make_temp(pem_format(cert), ".pem", False))
                 else:
                     certs.append(cert)
@@ -1015,10 +1015,10 @@ class SecurityContext(object):
                                              node_id=item.id, id_attr=id_attr):
                         verified = True
                         break
-            except XmlsecError, exc:
+            except XmlsecError as exc:
                 logger.error("check_sig: %s" % exc)
                 pass
-            except Exception, exc:
+            except Exception as exc:
                 logger.error("check_sig: %s" % exc)
                 raise
 
@@ -1180,7 +1180,7 @@ class SecurityContext(object):
                 try:
                     self._check_signature(decoded_xml, assertion,
                                           class_name(assertion), origdoc)
-                except Exception, exc:
+                except Exception as exc:
                     logger.error("correctly_signed_response: %s" % exc)
                     raise
 
@@ -1331,7 +1331,7 @@ def response_factory(sign=False, encrypt=False, **kwargs):
     if encrypt:
         pass
 
-    for key, val in kwargs.items():
+    for key, val in list(kwargs.items()):
         setattr(response, key, val)
 
     return response

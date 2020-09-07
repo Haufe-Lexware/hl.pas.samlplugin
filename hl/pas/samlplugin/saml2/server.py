@@ -83,7 +83,7 @@ class Server(Entity):
         _spec = self.config.getattr("session_storage", "idp")
         if not _spec:
             return SessionStorage()
-        elif isinstance(_spec, basestring):
+        elif isinstance(_spec, str):
             if _spec.lower() == "memory":
                 return SessionStorage()
         else:  # Should be tuple
@@ -108,7 +108,7 @@ class Server(Entity):
         typ = ""
         if not dbspec:
             idb = {}
-        elif isinstance(dbspec, basestring):
+        elif isinstance(dbspec, str):
             idb = shelve.open(dbspec, writeback=True)
         else:  # database spec is a a 2-tuple (type, address)
             #print >> sys.stderr, "DBSPEC: %s" % (dbspec,)
@@ -257,7 +257,7 @@ class Server(Entity):
                 policy = Policy()
             try:
                 ast.apply_policy(sp_entity_id, policy, self.metadata)
-            except MissingValue, exc:
+            except MissingValue as exc:
                 return self.create_error_response(in_response_to, consumer_url,
                                                   exc, sign_response)
 
@@ -415,7 +415,7 @@ class Server(Entity):
                                                           sp_entity_id,
                                                           name_id_policy,
                                                           nid_formats)
-            except IOError, exc:
+            except IOError as exc:
                 response = self.create_error_response(in_response_to,
                                                       destination,
                                                       sp_entity_id,
@@ -435,7 +435,7 @@ class Server(Entity):
                                         sign_assertion=sign_assertion,
                                         sign_response=sign_response)
 
-        except MissingValue, exc:
+        except MissingValue as exc:
             return self.create_error_response(in_response_to, destination,
                                               sp_entity_id, exc, name_id)
 

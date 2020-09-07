@@ -4,10 +4,10 @@
 # Generated Mon May  2 14:23:33 2011 by parse_xsd.py version 0.4.
 #
 
-from hl.pas.samlplugin import saml2 
+from hl.pas.samlplugin import saml2
 from hl.pas.samlplugin.saml2 import SamlBase
 
-import xmldsig as ds
+from . import xmldsig as ds
 
 NAMESPACE = 'http://www.w3.org/2001/04/xmlenc#'
 

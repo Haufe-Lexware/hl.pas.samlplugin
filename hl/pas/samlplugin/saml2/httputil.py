@@ -4,9 +4,9 @@ import logging
 import time
 import cgi
 
-from urllib import quote
-from urlparse import parse_qs
-from Cookie import SimpleCookie
+from urllib.parse import quote
+from urllib.parse import parse_qs
+from http.cookies import SimpleCookie
 
 from saml2 import BINDING_HTTP_ARTIFACT
 from saml2 import BINDING_HTTP_REDIRECT
@@ -58,7 +58,7 @@ class Response(object):
             mte = self.mako_lookup.get_template(self.mako_template)
             return [mte.render(**argv)]
         else:
-            if isinstance(message, basestring):
+            if isinstance(message, str):
                 return [message]
             else:
                 return message
@@ -148,7 +148,7 @@ def extract(environ, empty=False, err=False):
     """
     formdata = cgi.parse(environ['wsgi.input'], environ, empty, err)
     # Remove single entries from lists
-    for key, value in formdata.iteritems():
+    for key, value in formdata.items():
         if len(value) == 1:
             formdata[key] = value[0]
     return formdata
@@ -217,7 +217,7 @@ def get_response(environ, start_response):
 def unpack_redirect(environ):
     if "QUERY_STRING" in environ:
         _qs = environ["QUERY_STRING"]
-        return dict([(k, v[0]) for k, v in parse_qs(_qs).items()])
+        return dict([(k, v[0]) for k, v in list(parse_qs(_qs).items())])
     else:
         return None
 

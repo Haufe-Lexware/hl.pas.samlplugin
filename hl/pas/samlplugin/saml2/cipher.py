@@ -63,4 +63,4 @@ if __name__ == "__main__":
     iv = os.urandom(16)
     aes = AES()
     encrypted_msg = aes.encrypt(key, msg, iv)
-    print aes.decrypt(key, encrypted_msg, iv)
+    print(aes.decrypt(key, encrypted_msg, iv))

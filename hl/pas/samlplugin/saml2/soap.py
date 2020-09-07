@@ -197,7 +197,7 @@ def class_instances_from_soap_enveloped_saml_thingies(text, modules):
     """
     try:
         envelope = ElementTree.fromstring(text)
-    except Exception, exc:
+    except Exception as exc:
         raise XmlParseError("%s" % exc)
 
     assert envelope.tag == '{%s}Envelope' % soapenv.NAMESPACE
@@ -223,7 +223,7 @@ def open_soap_envelope(text):
     """
     try:
         envelope = ElementTree.fromstring(text)
-    except Exception, exc:
+    except Exception as exc:
         raise XmlParseError("%s" % exc)
 
     assert envelope.tag == '{%s}Envelope' % soapenv.NAMESPACE

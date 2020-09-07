@@ -1,7 +1,7 @@
 import calendar
-import urlparse
+import urllib.parse as urlparse
 import re
-import time_util
+from . import time_util
 import struct
 import base64
 
@@ -247,7 +247,7 @@ def valid_anytype(val):
     :param val: The value to validate
     :return: True is value is valid otherwise an exception is raised
     """
-    for validator in VALIDATOR.values():
+    for validator in list(VALIDATOR.values()):
         try:
             if validator(val):
                 return True
@@ -322,13 +322,13 @@ def valid(typ, value):
 def _valid_instance(instance, val):
     try:
         val.verify()
-    except NotValid, exc:
-        raise NotValid("Class '%s' instance: %s" % (
-            instance.__class__.__name__, exc.args[0]))
-    except OutsideCardinality, exc:
+    except NotValid:
+        raise NotValid("Class '%s'" % (
+            instance.__class__.__name__, ))
+    except OutsideCardinality:
         raise NotValid(
-            "Class '%s' instance cardinality error: %s" % (
-                instance.__class__.__name__, exc.args[0]))
+            "Class '%s' instance cardinality error" % (
+                instance.__class__.__name__, ))
 
 ERROR_TEXT = "Wrong type of value '%s' on attribute '%s' expected it to be %s"
 
@@ -346,11 +346,10 @@ def valid_instance(instance):
         try:
             validate_value_type(instance.text.strip(),
                                 instclass.c_value_type)
-        except NotValid, exc:
-            raise NotValid("Class '%s' instance: %s" % (class_name,
-                                                        exc.args[0]))
+        except NotValid:
+            raise NotValid("Class '%s'" % (class_name, ))
 
-    for (name, typ, required) in instclass.c_attributes.values():
+    for (name, typ, required) in list(instclass.c_attributes.values()):
         value = getattr(instance, name, '')
         if required and not value:
             txt = "Required value on property '%s' missing" % name
@@ -367,11 +366,11 @@ def valid_instance(instance):
                     validate_value_type(value, spec)
                 else:
                     valid(typ, value)
-            except (NotValid, ValueError), exc:
-                txt = ERROR_TEXT % (value, name, exc.args[0])
+            except (NotValid, ValueError):
+                txt = ERROR_TEXT % (value, name, '')
                 raise NotValid("Class '%s' instance: %s" % (class_name, txt))
         
-    for (name, _spec) in instclass.c_children.values():
+    for (name, _spec) in list(instclass.c_children.values()):
         value = getattr(instance, name, '')
 
         try:

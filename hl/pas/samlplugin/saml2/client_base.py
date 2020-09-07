@@ -18,8 +18,8 @@
 """Contains classes and functions that a SAML2.0 Service Provider (SP) may use
 to conclude its tasks.
 """
-from urllib import urlencode
-from urlparse import urlparse
+from urllib.parse import urlencode
+from urllib.parse import urlparse
 
 from .entity import Entity
 
@@ -41,7 +41,7 @@ import time
 from .soap import make_soap_enveloped_saml_thingy
 
 try:
-    from urlparse import parse_qs
+    from urllib.parse import parse_qs
 except ImportError:
     # Compatibility with Python <= 2.5
     from cgi import parse_qs
@@ -49,7 +49,7 @@ except ImportError:
 from .s_utils import signature, UnravelError
 from .s_utils import do_attributes
 
-import soap
+from . import soap
 from .population import Population
 
 from .response import AttributeResponse, StatusError
@@ -159,7 +159,7 @@ class Base(Entity):
             raise IdpUnspecified("Too many IdPs to choose from: %s" % eids)
 
         try:
-            srvs = self.metadata.single_sign_on_service(eids.keys()[0], binding)
+            srvs = self.metadata.single_sign_on_service(list(eids.keys())[0], binding)
             return destinations(srvs)[0]
         except IndexError:
             raise IdpUnspecified("No IdP to send to given the premises")
@@ -337,7 +337,7 @@ class Base(Entity):
                         pass
             else:
                 raise AttributeError("Missing required parameter")
-        elif isinstance(name_id, basestring):
+        elif isinstance(name_id, str):
             name_id = NameID(text=name_id)
             for key in ["sp_name_qualifier", "name_qualifier", "format"]:
                 try:
@@ -403,7 +403,7 @@ class Base(Entity):
         """
 
         if action:
-            if isinstance(action, basestring):
+            if isinstance(action, str):
                 _action = [Action(text=action)]
             else:
                 _action = [Action(text=a) for a in action]
@@ -426,7 +426,7 @@ class Base(Entity):
 #        return self._message(AssertionIDRequest, destination, id, consent,
 #                             extensions, sign, assertion_id_ref=id_refs )
 
-        if isinstance(assertion_id_refs, basestring):
+        if isinstance(assertion_id_refs, str):
             return assertion_id_refs
         else:
             return assertion_id_refs[0]
@@ -515,12 +515,12 @@ class Base(Entity):
                 resp = self._parse_response(xmlstr, AuthnResponse,
                                             "assertion_consumer_service",
                                             binding, **kwargs)
-            except StatusError, err:
+            except StatusError as err:
                 logger.error("SAML status error: %s" % err)
                 raise
             except UnravelError:
                 return None
-            except Exception, exc:
+            except Exception as exc:
                 logger.error("%s" % exc)
                 raise
 

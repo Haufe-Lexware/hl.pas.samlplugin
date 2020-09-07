@@ -3,16 +3,16 @@ import logging
 import base64
 import requests
 from binascii import hexlify
-from Cookie import SimpleCookie
-from saml2.client import Saml2Client as BaseClient
-from saml2.s_utils import sid, decode_base64_and_inflate
-from saml2 import saml, samlp, class_name, VERSION
-from saml2.time_util import instant
-from saml2.sigver import pre_signature_part, signed_instance_factory
-from saml2.pack import http_redirect_message, make_soap_enveloped_saml_thingy
-from saml2.mdstore import destinations
-from saml2.entity import ARTIFACT_TYPECODE
-from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST, BINDING_PAOS
+from http.cookies import SimpleCookie
+from .saml2.client import Saml2Client as BaseClient
+from .saml2.s_utils import sid, decode_base64_and_inflate
+from .saml2 import saml, samlp, class_name, VERSION
+from .saml2.time_util import instant
+from .saml2.sigver import pre_signature_part, signed_instance_factory
+from .saml2.pack import http_redirect_message, make_soap_enveloped_saml_thingy
+from .saml2.mdstore import destinations
+from .saml2.entity import ARTIFACT_TYPECODE
+from .saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST, BINDING_PAOS
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,12 @@
 import calendar
-import cookielib
+import http.cookiejar as cookielib
 import copy
 import re
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse as urlparse
 import requests
 import time
-from Cookie import SimpleCookie
+from http.cookies import SimpleCookie
 from .time_util import utc_now
 from hl.pas.samlplugin.saml2 import class_name
 from .pack import http_form_post_message
@@ -76,7 +76,7 @@ def set_list2dict(sl):
 
 
 def dict2set_list(dic):
-    return [(k, v) for k, v in dic.items()]
+    return [(k, v) for k, v in list(dic.items())]
 
 
 class HTTPBase(object):
@@ -113,7 +113,7 @@ class HTTPBase(object):
         cookie_dict = {}
         now = utc_now()
         for _, a in list(self.cookiejar._cookies.items()):
-            for _, b in a.items():
+            for _, b in list(a.items()):
                 for cookie in list(b.values()):
                     # print cookie
                     if cookie.expires and cookie.expires <= now:
@@ -137,7 +137,7 @@ class HTTPBase(object):
         _domain = part.hostname
         logger.debug("%s: '%s'" % (_domain, kaka))
 
-        for cookie_name, morsel in kaka.items():
+        for cookie_name, morsel in list(kaka.items()):
             std_attr = ATTRS.copy()
             std_attr["name"] = cookie_name
             _tmp = morsel.coded_value
@@ -148,7 +148,7 @@ class HTTPBase(object):
 
             std_attr["version"] = 0
             # copy attributes that have values
-            for attr in morsel.keys():
+            for attr in list(morsel.keys()):
                 if attr in ATTRS:
                     if morsel[attr]:
                         if attr == "expires":
@@ -159,7 +159,7 @@ class HTTPBase(object):
                     if morsel["max-age"]:
                         std_attr["expires"] = _since_epoch(morsel["max-age"])
 
-            for att, item in PAIRS.items():
+            for att, item in list(PAIRS.items()):
                 if std_attr[att]:
                     std_attr[item] = True
 
@@ -204,8 +204,8 @@ class HTTPBase(object):
 
         try:
             r = requests.request(method, url, **_kwargs)
-        except requests.ConnectionError, exc:
-            raise ConnectionError("%s" % exc)
+        except requests.ConnectionError:
+            raise ConnectionError("exc")
 
         try:
             self.set_cookie(SimpleCookie(r.headers["set-cookie"]), r)
@@ -226,7 +226,7 @@ class HTTPBase(object):
         :param typ: Whether a Request, Response or Artifact
         :return: dictionary
         """
-        if not isinstance(message, basestring):
+        if not isinstance(message, str):
             message = "%s" % (message,)
 
         return http_form_post_message(message, destination, relay_state, typ)
@@ -243,17 +243,17 @@ class HTTPBase(object):
         :param typ: Whether a Request, Response or Artifact
         :return: dictionary
         """
-        if not isinstance(message, basestring):
+        if not isinstance(message, str):
             message = "%s" % (message,)
 
         return http_redirect_message(message, destination, relay_state, typ)
 
     def use_http_artifact(self, message, destination="", relay_state=""):
         if relay_state:
-            query = urllib.urlencode({"SAMLart": message,
+            query = urllib.parse.urlencode({"SAMLart": message,
                                       "RelayState": relay_state})
         else:
-            query = urllib.urlencode({"SAMLart": message})
+            query = urllib.parse.urlencode({"SAMLart": message})
         info = {
             "data": "",
             "url": "%s?%s" % (destination, query)
@@ -273,10 +273,10 @@ class HTTPBase(object):
         elif typ == "SAMLRequest":
             # msg should be an identifier
             if relay_state:
-                query = urllib.urlencode({"ID": message,
+                query = urllib.parse.urlencode({"ID": message,
                                           "RelayState": relay_state})
             else:
-                query = urllib.urlencode({"ID": message})
+                query = urllib.parse.urlencode({"ID": message})
             info = {
                 "data": "",
                 "url": "%s?%s" % (destination, query)
@@ -327,8 +327,8 @@ class HTTPBase(object):
             args = self.use_soap(request, destination, headers, sign)
             args["headers"] = dict(args["headers"])
             response = self.send(**args)
-        except Exception, exc:
-            logger.info("HTTPClient exception: %s" % (exc,))
+        except Exception:
+            logger.info("HTTPClient exception")
             raise
 
         if response.status_code == 200:

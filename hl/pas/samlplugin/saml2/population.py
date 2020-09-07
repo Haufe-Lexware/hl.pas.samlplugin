@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 class Population(object):
     def __init__(self, cache=None):
         if cache:
-            if isinstance(cache, basestring):
+            if isinstance(cache, str):
                 self.cache = Cache(cache)
             else:
                 self.cache = cache

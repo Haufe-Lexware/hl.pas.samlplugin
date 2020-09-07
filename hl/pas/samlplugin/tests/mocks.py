@@ -8,7 +8,7 @@ class SessionMock(UserDict):
         self[k] = v
 
     def __getitem__(self, k, default=None):
-        if self.has_key(k):
+        if k in self:
             return UserDict.__getitem__(self, k)
         return default
 

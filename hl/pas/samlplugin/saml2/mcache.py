@@ -52,14 +52,14 @@ class Cache(object):
             
         res = {}
         oldees = []
-        for (entity_id, item) in self._cache.get_multi(entities, 
-                                                    subject_id+'_').items():
+        for (entity_id, item) in list(self._cache.get_multi(entities, 
+                                                    subject_id+'_').items()):
             try:
                 info = self.get_info(item)
             except ToOld:
                 oldees.append(entity_id)
                 continue
-            for key, vals in info["ava"].items():            
+            for key, vals in list(info["ava"].items()):            
                 try:
                     tmp = set(res[key]).union(set(vals))
                     res[key] = list(tmp)

@@ -9,8 +9,8 @@ from .validate import ShouldValueError
 from .validate import valid_domain_name
 from hl.pas.samlplugin.saml2 import SamlBase, create_class_from_xml_string
 
-import xmldsig as ds
-import xmlenc as xenc
+from . import xmldsig as ds
+from . import xmlenc as xenc
 
 NAMESPACE = 'urn:oasis:names:tc:SAML:2.0:assertion'
 
@@ -90,7 +90,7 @@ def _verify_value_type(typ, val):
         try:
             return str(val)
         except UnicodeEncodeError:
-            return unicode(val)
+            return str(val)
     if typ == XSD + "integer" or typ == XSD + "int":
         return int(val)
     if typ == XSD + "float" or typ == XSD + "double":
@@ -177,7 +177,7 @@ class AttributeValueBase(SamlBase):
             val = base64.encodestring(val)
             self.set_type("xs:base64Binary")
         else:
-            if isinstance(val, basestring):
+            if isinstance(val, str):
                 if not typ:
                     self.set_type("xs:string")
                 else:
@@ -235,7 +235,7 @@ class AttributeValueBase(SamlBase):
         # Fill in the instance members from the contents of the XML tree.
         for child in tree:
             self._convert_element_tree_to_member(child)
-        for attribute, value in tree.attrib.iteritems():
+        for attribute, value in tree.attrib.items():
             self._convert_element_attribute_to_member(attribute, value)
         if tree.text:
             #print "set_text:", tree.text

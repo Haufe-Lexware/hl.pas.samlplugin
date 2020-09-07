@@ -7,11 +7,11 @@ from .soap import parse_soap_enveloped_saml_artifact_resolve
 from .soap import class_instances_from_soap_enveloped_saml_thingies
 from .soap import open_soap_envelope
 
-import samlp
+from . import samlp
 from hl.pas.samlplugin.saml2 import SamlBase, BINDING_URI, BINDING_HTTP_ARTIFACT, BINDING_PAOS, element_to_extension_element, extension_elements_to_elements, BINDING_HTTP_POST, BINDING_HTTP_REDIRECT, BINDING_SOAP, VERSION, class_name
-import saml
-import request
-import soap
+from . import saml
+from . import request
+from . import soap
 
 from .saml import NameID
 from .saml import Issuer
@@ -102,7 +102,7 @@ class Entity(HTTPBase):
                           self.config.cert_file)
 
         if self.config.vorg:
-            for vo in self.config.vorg.values():
+            for vo in list(self.config.vorg.values()):
                 vo.sp = self
 
         self.metadata = self.config.metadata
@@ -113,7 +113,7 @@ class Entity(HTTPBase):
         self.sec = security_context(self.config)
 
         if virtual_organization:
-            if isinstance(virtual_organization, basestring):
+            if isinstance(virtual_organization, str):
                 self.vorg = self.config.vorg[virtual_organization]
             elif isinstance(virtual_organization, VirtualOrg):
                 self.vorg = virtual_organization
@@ -355,7 +355,7 @@ class Entity(HTTPBase):
         if not message_id:
             message_id = sid(self.seed)
 
-        for key, val in self.message_args(message_id).items():
+        for key, val in list(self.message_args(message_id).items()):
             if key not in kwargs:
                 kwargs[key] = val
 
@@ -381,8 +381,8 @@ class Entity(HTTPBase):
         if extensions is None:
             extensions = []
 
-        allowed_attributes = instance.keys()
-        for key, val in kwargs.items():
+        allowed_attributes = list(instance.keys())
+        for key, val in list(kwargs.items()):
             if key in allowed_attributes:
                 args[key] = val
             elif isinstance(val, SamlBase):
@@ -402,7 +402,7 @@ class Entity(HTTPBase):
         """
 
         args, extensions = self._filter_args(msg, **kwargs)
-        for key, val in args.items():
+        for key, val in list(args.items()):
             setattr(msg, key, val)
 
         if extensions:
@@ -772,7 +772,7 @@ class Entity(HTTPBase):
 
             try:
                 response = response_cls(self.sec, **kwargs)
-            except Exception, exc:
+            except Exception as exc:
                 logger.info("%s" % exc)
                 raise
 
@@ -784,7 +784,7 @@ class Entity(HTTPBase):
 
             try:
                 response = response.loads(xmlstr, False)
-            except Exception, err:
+            except Exception as err:
                 if "not well-formed" in "%s" % err:
                     logger.error("Not well-formed XML")
                     return None

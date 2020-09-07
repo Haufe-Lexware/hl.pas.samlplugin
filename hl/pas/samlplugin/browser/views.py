@@ -18,7 +18,7 @@ class LoginView(BrowserView):
         if not mtool.isAnonymousUser():
             # The user is logged in, but has insufficient permissions.
             # Since he has a valid SSO session, challenge would go on forever if we proceed.
-            raise Unauthorized, 'insufficient permissions'
+            raise Unauthorized('insufficient permissions')
         came_from = self.request.get('came_from', self.request.HTTP_REFERER)
         self.request.HTTP_REFERER = came_from
         getUtility(ISAMLSessionCheck).active(self.request)

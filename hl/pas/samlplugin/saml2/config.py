@@ -22,15 +22,15 @@ from .virtual_org import VirtualOrg
 
 logger = logging.getLogger(__name__)
 
-import md
-import saml
+from . import md
+from . import saml
 from .extension import mdui
 from .extension import idpdisc
 from .extension import dri
 from .extension import mdattr
 from .extension import ui
-import xmldsig
-import xmlenc
+from . import xmldsig
+from . import xmlenc
 
 
 from hl.pas.samlplugin.saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST, BINDING_HTTP_ARTIFACT, BINDING_SOAP, BINDING_URI, root_logger
@@ -260,11 +260,11 @@ class Config(object):
 
     def unicode_convert(self, item):
         try:
-            return unicode(item, "utf-8")
+            return str(item, "utf-8")
         except TypeError:
             _uc = self.unicode_convert
             if isinstance(item, dict):
-                return dict([(key, _uc(val)) for key, val in item.items()])
+                return dict([(key, _uc(val)) for key, val in list(item.items())])
             elif isinstance(item, list):
                 return [_uc(v) for v in item]
             elif isinstance(item, tuple):
@@ -284,7 +284,7 @@ class Config(object):
         for arg in COMMON_ARGS:
             if arg == "virtual_organization":
                 if "virtual_organization" in cnf:
-                    for key, val in cnf["virtual_organization"].items():
+                    for key, val in list(cnf["virtual_organization"].items()):
                         self.vorg[key] = VirtualOrg(None, key, val)
                 continue
 
@@ -339,7 +339,7 @@ class Config(object):
             disable_validation = False
 
         mds = MetadataStore(
-            ONTS.values(), acs, self, ca_certs,
+            list(ONTS.values()), acs, self, ca_certs,
             disable_ssl_certificate_validation=disable_validation)
 
         mds.imp(metadata_conf)
@@ -452,7 +452,7 @@ class SPConfig(Config):
         """
         _ecp = self.getattr("ecp")
         if _ecp:
-            for key, eid in _ecp.items():
+            for key, eid in list(_ecp.items()):
                 if re.match(key, ipaddress):
                     return eid
 

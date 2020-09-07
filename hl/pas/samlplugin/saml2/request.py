@@ -1,7 +1,7 @@
 import logging
 
-from attribute_converter import to_local
-import time_util
+from .attribute_converter import to_local
+from . import time_util
 from .s_utils import OtherError
 
 from .validate import valid_instance
@@ -44,7 +44,7 @@ class Request(object):
             self.message = self.signature_check(xmldata, origdoc=origdoc)
         except TypeError:
             raise
-        except Exception, excp:
+        except Exception as excp:
             logger.info("EXCEPTION: %s", excp)
     
         if not self.message:
@@ -56,7 +56,7 @@ class Request(object):
 
         try:
             valid_instance(self.message)
-        except NotValid, exc:
+        except NotValid as exc:
             logger.error("Not valid request: %s" % exc.args[0])
             raise
         
@@ -100,14 +100,14 @@ class Request(object):
         :return: The identifier if there is one
         """
 
-        if "subject" in self.message.keys():
+        if "subject" in list(self.message.keys()):
             _subj = self.message.subject
-            if "base_id" in _subj.keys() and _subj.base_id:
+            if "base_id" in list(_subj.keys()) and _subj.base_id:
                 return _subj.base_id
             elif _subj.name_id:
                 return _subj.name_id
         else:
-            if "base_id" in self.message.keys() and self.message.base_id:
+            if "base_id" in list(self.message.keys()) and self.message.base_id:
                 return self.message.base_id
             elif self.message.name_id:
                 return self.message.name_id

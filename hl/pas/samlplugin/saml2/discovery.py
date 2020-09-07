@@ -1,5 +1,5 @@
-from urllib import urlencode
-from urlparse import urlparse, parse_qs
+from urllib.parse import urlencode
+from urllib.parse import urlparse, parse_qs
 from saml2.entity import Entity
 from saml2.response import VerificationError
 
@@ -35,9 +35,9 @@ class DiscoveryServer(Entity):
             if part.query:
                 qp = parse_qs(part.query)
                 if "returnIDParam" in dsr:
-                    assert dsr["returnIDParam"] not in qp.keys()
+                    assert dsr["returnIDParam"] not in list(qp.keys())
                 else:
-                    assert "entityID" not in qp.keys()
+                    assert "entityID" not in list(qp.keys())
         else:
             # If metadata not used this is mandatory
             raise VerificationError("Missing mandatory parameter 'return'")

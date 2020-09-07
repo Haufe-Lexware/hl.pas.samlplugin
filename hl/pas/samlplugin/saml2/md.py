@@ -6,9 +6,9 @@
 
 from hl.pas.samlplugin.saml2 import SamlBase, create_class_from_xml_string
 
-import xmldsig as ds
-import xmlenc as xenc
-import saml
+from . import xmldsig as ds
+from . import xmlenc as xenc
+from . import saml
 
 NAMESPACE = 'urn:oasis:names:tc:SAML:2.0:metadata'
 

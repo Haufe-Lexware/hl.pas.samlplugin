@@ -38,13 +38,13 @@ from .samlp import STATUS_UNKNOWN_ATTR_PROFILE
 from .samlp import STATUS_UNKNOWN_PRINCIPAL
 from .samlp import STATUS_UNSUPPORTED_BINDING
 
-import xmldsig as ds
-import xmlenc as xenc
+from . import xmldsig as ds
+from . import xmlenc as xenc
 
-import samlp
+from . import samlp
 from hl.pas.samlplugin.saml2 import extension_elements_to_elements, extension_element_to_element
-import saml
-import time_util
+from . import saml
+from . import time_util
 
 from .s_utils import RequestVersionTooLow
 from .s_utils import RequestVersionTooHigh
@@ -274,7 +274,7 @@ class StatusResponse(object):
 
         try:
             valid_instance(self.response)
-        except NotValid, exc:
+        except NotValid as exc:
             logger.error("Not valid response: %s" % exc.args[0])
             self._clear()
             return self
@@ -309,7 +309,7 @@ class StatusResponse(object):
             raise
         except SignatureError:
             raise
-        except Exception, excp:
+        except Exception as excp:
             logger.exception("EXCEPTION: %s", excp)
             raise
     
@@ -521,7 +521,7 @@ class AuthnResponse(StatusResponse):
                     condition.not_on_or_after, self.timeslack)
             if condition.not_before:
                 validate_before(condition.not_before, self.timeslack)
-        except Exception, excp:
+        except Exception as excp:
             logger.error("Exception on condition: %s" % (excp,))
             if not lax:
                 raise
@@ -606,7 +606,7 @@ class AuthnResponse(StatusResponse):
                 # recognize
                 logger.debug("in response to: '%s'" % data.in_response_to)
                 logger.info("outstanding queries: %s" % (
-                    self.outstanding_queries.keys(),))
+                    list(self.outstanding_queries.keys()),))
                 raise Exception(
                     "Combination of session id and requestURI I don't recall")
         return True
@@ -927,7 +927,7 @@ class AssertionIDResponse(object):
             raise
         except SignatureError:
             raise
-        except Exception, excp:
+        except Exception as excp:
             logger.exception("EXCEPTION: %s", excp)
             raise
 
@@ -938,7 +938,7 @@ class AssertionIDResponse(object):
     def verify(self):
         try:
             valid_instance(self.response)
-        except NotValid, exc:
+        except NotValid as exc:
             logger.error("Not valid response: %s" % exc.args[0])
             raise
         return self

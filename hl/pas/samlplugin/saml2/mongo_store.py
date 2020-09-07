@@ -16,8 +16,8 @@ from saml2.extension import idpdisc
 from saml2.extension import dri
 from saml2.extension import mdattr
 from saml2.extension import ui
-import xmldsig
-import xmlenc
+from . import xmldsig
+from . import xmlenc
 
 
 ONTS = {
@@ -61,7 +61,7 @@ class SessionStorageMDB(object):
         doc = {
             "name_id_key": nkey,
             "assertion_id": assertion.id,
-            "assertion": to_dict(assertion, ONTS.values(), True),
+            "assertion": to_dict(assertion, list(ONTS.values()), True),
             "to_sign": to_sign
         }
 
@@ -147,7 +147,7 @@ class IdentMDB(IdentDB):
         return _id
 
     def store(self, ident, name_id):
-        self.mdb.store(ident, name_id=to_dict(name_id, ONTS.values(), True))
+        self.mdb.store(ident, name_id=to_dict(name_id, list(ONTS.values()), True))
 
     def find_nameid(self, userid, nformat=None, sp_name_qualifier=None,
                     name_qualifier=None, sp_provided_id=None):
@@ -167,13 +167,13 @@ class IdentMDB(IdentDB):
         return res
 
     def find_local_id(self, name_id):
-        cnid = to_dict(name_id, ONTS.values(), True)
+        cnid = to_dict(name_id, list(ONTS.values()), True)
         for item in self.mdb.get({"name_id": cnid}):
             return item[self.mdb.primary_key]
         return None
 
     def remove_remote(self, name_id):
-        cnid = to_dict(name_id, ONTS.values(), True)
+        cnid = to_dict(name_id, list(ONTS.values()), True)
         self.mdb.remove({"name_id": cnid})
 
     def handle_name_id_mapping_request(self, name_id, name_id_policy):
@@ -274,16 +274,16 @@ class EptidMDB(Eptid):
 
 def protect(dic):
     res = {}
-    for key, val in dic.items():
+    for key, val in list(dic.items()):
         key = key.replace(".", "__")
-        if isinstance(val, basestring):
+        if isinstance(val, str):
             pass
         elif isinstance(val, dict):
             val = protect(val)
         elif isinstance(val, list):
             li = []
             for va in val:
-                if isinstance(va, basestring):
+                if isinstance(va, str):
                     pass
                 elif isinstance(va, dict):
                     va = protect(va)
@@ -296,19 +296,19 @@ def protect(dic):
 
 def unprotect(dic):
     res = {}
-    for key, val in dic.items():
+    for key, val in list(dic.items()):
         if key == "__class__":
             pass
         else:
             key = key.replace("__", ".")
-        if isinstance(val, basestring):
+        if isinstance(val, str):
             pass
         elif isinstance(val, dict):
             val = unprotect(val)
         elif isinstance(val, list):
             li = []
             for va in val:
-                if isinstance(va, basestring):
+                if isinstance(va, str):
                     pass
                 elif isinstance(val, dict):
                     va = unprotect(va)
@@ -322,7 +322,7 @@ def export_mdstore_to_mongo_db(mds, collection, sub_collection=""):
     mdb = MDB(collection, sub_collection)
     mdb.reset()
     mdb.primary_key = "entity_id"
-    for key, desc in mds.items():
+    for key, desc in list(mds.items()):
         kwargs = {
             "entity_description": protect(desc),
         }
@@ -358,14 +358,14 @@ class MetadataMDB(MetaData):
         pass
 
     def items(self):
-        for key, item in self.mdb.items():
+        for key, item in list(self.mdb.items()):
             yield key, unprotect(item["entity_description"])
 
     def keys(self):
-        return self.mdb.keys()
+        return list(self.mdb.keys())
 
     def values(self):
-        for key, item in self.mdb.items():
+        for key, item in list(self.mdb.items()):
             yield unprotect(item["entity_description"])
 
     def __contains__(self, item):

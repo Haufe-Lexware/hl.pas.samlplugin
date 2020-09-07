@@ -242,8 +242,8 @@ def str_to_time(timestr, format=TIME_FORMAT):
     except ValueError:  # assume it's a format problem
         try:
             elem = TIME_FORMAT_WITH_FRAGMENT.match(timestr)
-        except Exception, exc:
-            print >> sys.stderr, "Exception: %s on %s" % (exc, timestr)
+        except Exception:
+            sys.stderr.write("Exception: %s" % (timestr, ))
             raise
         then = time.strptime(elem.groups()[0] + "Z", TIME_FORMAT)
 
@@ -271,7 +271,7 @@ def before(point):
     if not point:
         return True
 
-    if isinstance(point, basestring):
+    if isinstance(point, str):
         point = str_to_time(point)
     elif isinstance(point, int):
         point = time.gmtime(point)
@@ -299,12 +299,12 @@ valid = before
 
 def later_than(after, before):
     """ True if then is later or equal to that """
-    if isinstance(after, basestring):
+    if isinstance(after, str):
         after = str_to_time(after)
     elif isinstance(after, int):
         after = time.gmtime(after)
 
-    if isinstance(before, basestring):
+    if isinstance(before, str):
         before = str_to_time(before)
     elif isinstance(before, int):
         before = time.gmtime(before)

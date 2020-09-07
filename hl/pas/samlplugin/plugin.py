@@ -1,8 +1,8 @@
 import os
 import cgi
 import logging
-from urllib import quote
-from cStringIO import StringIO
+from urllib.parse import quote
+from io import BytesIO
 from AccessControl.SecurityInfo import ClassSecurityInfo
 from Persistence import PersistentMapping
 from App.class_init import default__class_init__ as InitializeClass
@@ -16,16 +16,16 @@ from Products.PluggableAuthService.utils import classImplements
 from Products.PluggableAuthService.interfaces.plugins import \
      IExtractionPlugin, IAuthenticationPlugin, IChallengePlugin, ICredentialsResetPlugin, IPropertiesPlugin
 from Products.PageTemplates.PageTemplateFile import PageTemplateFile
-from saml2.config import SPConfig
-from saml2 import saml, samlp
-from saml2.sigver import signed_instance_factory
-from saml2.pack import http_redirect_message
-from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_ARTIFACT, BINDING_HTTP_POST
-from saml2.saml import NAME_FORMAT_URI
-from saml2.mdstore import destinations
-from client import Saml2Client
-from util import get_identity
-from interfaces import ISAMLLogoutHandler, ISAMLAttributeProvider, ISAMLSessionCheck
+from .saml2.config import SPConfig
+from .saml2 import saml, samlp
+from .saml2.sigver import signed_instance_factory
+from .saml2.pack import http_redirect_message
+from .saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_ARTIFACT, BINDING_HTTP_POST
+from .saml2.saml import NAME_FORMAT_URI
+from .saml2.mdstore import destinations
+from .client import Saml2Client
+from .util import get_identity
+from .interfaces import ISAMLLogoutHandler, ISAMLAttributeProvider, ISAMLSessionCheck
 
 logger = logging.getLogger('hl.pas.samlplugin')
 
@@ -195,7 +195,7 @@ class SAML2Plugin(BasePlugin):
         creds={}
         config = self._saml2_config()
         scl = Saml2Client(config)
-        entityid = config.metadata.keys()[0]
+        entityid = list(config.metadata.keys())[0]
         sp_url = self.saml2_sp_url
         actual_url = request.get("ACTUAL_URL", '')
         if not actual_url.startswith(sp_url):
@@ -219,7 +219,7 @@ class SAML2Plugin(BasePlugin):
             #session.set(self.session_sessid, {sid:''})
             session.set(self.session_storedurl_key, actual_url_with_query)
             headers = dict(result['headers'])
-            for k, v in headers.items():
+            for k, v in list(headers.items()):
                 request.response.setHeader(k, v)
             request.response.redirect(headers['Location'], lock=1)
         # Idp response - protocol binding POST
@@ -228,12 +228,12 @@ class SAML2Plugin(BasePlugin):
             post_env['QUERY_STRING'] = ''
             request.stdin.seek(0)
             post = cgi.FieldStorage(
-                fp = StringIO(request.stdin.read()),
+                fp = BytesIO(request.stdin.read()),
                 environ = post_env,
                 keep_blank_values = True,
             )
             storedurl = session.get(self.session_storedurl_key, actual_url_with_query)
-            if session.has_key(self.session_storedurl_key):
+            if self.session_storedurl_key in session:
                 session.delete(self.session_storedurl_key)
             request.response.redirect(storedurl)
             try:
@@ -245,7 +245,7 @@ class SAML2Plugin(BasePlugin):
             creds = self._setup_local_session(session, scl, sessinfo)
         elif 'SAMLart' in request.form:
             storedurl = session.get(self.session_storedurl_key, actual_url_with_query)
-            if session.has_key(self.session_storedurl_key):
+            if self.session_storedurl_key in session:
                 session.delete(self.session_storedurl_key)
             request.response.redirect(storedurl)
             r = scl.artifact2message(request.form.pop('SAMLart'), 'idpsso')
@@ -340,14 +340,14 @@ class SAML2Plugin(BasePlugin):
         logger.info('REFERER: %s' % request.HTTP_REFERER)
         session.set(self.session_storedurl_key, request.HTTP_REFERER)
         config = self._saml2_config()
-        entityid = config.metadata.keys()[0]
+        entityid = list(config.metadata.keys())[0]
         # Initiate challenge
         scl = Saml2Client(config)
         # if we have an existing SSI session, continue in extractCredentials, otherwise redirect to SAML2 login
         (sid, result) = scl.authenticate(entityid, binding=BINDING_HTTP_REDIRECT, requested_authn_context=self._authn_context(authn_context_class))
         session.set(self.session_sessid, {sid:''})
         headers = dict(result['headers'])
-        for k, v in headers.items():
+        for k, v in list(headers.items()):
             request.response.setHeader(k, v)
         request.response.redirect(headers['Location'], lock=1)
         return True
@@ -371,7 +371,7 @@ class SAML2Plugin(BasePlugin):
         config = self._saml2_config()
         scl = Saml2Client(config)
         samluid = session.get(self.session_samluid_key, '')
-        entityid = config.metadata.keys()[0]
+        entityid = list(config.metadata.keys())[0]
         sp_url = self.saml2_sp_url
         actual_url = request.get("ACTUAL_URL", '')
         if not actual_url.startswith(sp_url):

@@ -2,7 +2,7 @@
 
 import shelve
 from .ident import code, decode
-import time_util
+from . import time_util
 import logging
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ class Cache(object):
         if not entities:
             try:
                 cni = code(name_id)
-                entities = self._db[cni].keys()
+                entities = list(self._db[cni].keys())
             except KeyError:
                 return {}, []
             
@@ -74,7 +74,7 @@ class Cache(object):
                 oldees.append(entity_id)
                 continue
                 
-            for key, vals in info["ava"].items():            
+            for key, vals in list(info["ava"].items()):            
                 try:
                     tmp = set(res[key]).union(set(vals))
                     res[key] = list(tmp)
@@ -139,7 +139,7 @@ class Cache(object):
         :return: A possibly empty list of entity identifiers
         """
         cni = code(name_id)
-        return self._db[cni].keys()
+        return list(self._db[cni].keys())
         
     def receivers(self, name_id):
         """ Another name for entities() just to make it more logic in the IdP 
@@ -170,4 +170,4 @@ class Cache(object):
         
         :return: list of subject identifiers
         """
-        return [decode(c) for c in self._db.keys()]
+        return [decode(c) for c in list(self._db.keys())]

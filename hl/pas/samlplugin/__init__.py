@@ -1,6 +1,7 @@
-import install
+from hl.pas.samlplugin import install
 
 install.register_samlplugin_plugin()
+
 
 def initialize(context):
     """Initializer called when used as a Zope 2 product."""

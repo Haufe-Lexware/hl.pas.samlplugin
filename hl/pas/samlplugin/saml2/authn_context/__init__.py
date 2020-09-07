@@ -81,7 +81,7 @@ class AuthnBroker(object):
             raise NotImplementedError()
 
         self.next += 1
-        _ref = str(self.next)
+        _ref = str(self.__next__)
         self.db["info"][_ref] = _info
         try:
             self.db["key"][key].append(_ref)
@@ -131,7 +131,7 @@ class AuthnBroker(object):
                 res.append((item["method"], ref))
                 if func(_level, item["level"]):
                     _level = item["level"]
-            for ref, _dic in self.db["info"].items():
+            for ref, _dic in list(self.db["info"].items()):
                 if ref in _refs:
                     continue
                 elif func(_level, _dic["level"]):

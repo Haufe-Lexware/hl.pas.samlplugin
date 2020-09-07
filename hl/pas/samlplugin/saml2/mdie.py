@@ -22,7 +22,7 @@ def _eval(val, onts, mdb_safe):
     :param onts: Schemas to be used in the conversion
     :return: The basic dictionary
     """
-    if isinstance(val, basestring):
+    if isinstance(val, str):
         val = val.strip()
         if not val:
             return None
@@ -64,7 +64,7 @@ def to_dict(_dict, onts, mdb_safe=False):
             elif key == "extension_attributes":
                 if mdb_safe:
                     _val = dict([(k.replace(".", "__"), v) for k, v in
-                                 val.items()])
+                                 list(val.items())])
                     #_val = {k.replace(".", "__"): v for k, v in val.items()}
                 else:
                     _val = val
@@ -76,7 +76,7 @@ def to_dict(_dict, onts, mdb_safe=False):
                     key = key.replace(".", "__")
                 res[key] = _val
     else:
-        for key, val in _dict.items():
+        for key, val in list(_dict.items()):
             _val = _eval(val, onts, mdb_safe)
             if _val:
                 if mdb_safe and "." in key:
@@ -97,13 +97,13 @@ def _kwa(val, onts, mdb_safe=False):
     :return: A converted dictionary
     """
     if not mdb_safe:
-        return dict([(k, from_dict(v, onts)) for k, v in val.items()
+        return dict([(k, from_dict(v, onts)) for k, v in list(val.items())
                      if k not in EXP_SKIP])
     else:
         _skip = ["_id"]
         _skip.extend(EXP_SKIP)
         return dict([(k.replace("__", "."), from_dict(v, onts)) for k, v in
-                     val.items() if k not in _skip])
+                     list(val.items()) if k not in _skip])
 
 
 def from_dict(val, onts, mdb_safe=False):
@@ -119,7 +119,7 @@ def from_dict(val, onts, mdb_safe=False):
             cls = getattr(onts[ns], typ)
             if cls is md.Extensions:
                 lv = []
-                for key, ditems in val.items():
+                for key, ditems in list(val.items()):
                     if key in EXP_SKIP:
                         continue
                     for item in ditems:
@@ -135,12 +135,12 @@ def from_dict(val, onts, mdb_safe=False):
             return inst
         else:
             res = {}
-            for key, v in val.items():
+            for key, v in list(val.items()):
                 if mdb_safe:
                     key = key.replace("__", ".")
                 res[key] = from_dict(v, onts)
             return res
-    elif isinstance(val, basestring):
+    elif isinstance(val, str):
         return val
     elif isinstance(val, list):
         return [from_dict(v, onts) for v in val]

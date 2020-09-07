@@ -3,10 +3,10 @@ from .time_util import in_a_while
 from .extension import mdui, idpdisc, shibmd, mdattr
 from .saml import NAME_FORMAT_URI, AttributeValue, Attribute
 from .attribute_converter import from_local_name
-import md, saml
+from . import md, saml
 from hl.pas.samlplugin.saml2 import BINDING_HTTP_POST, BINDING_HTTP_REDIRECT, BINDING_SOAP, class_name
-import samlp
-import xmldsig as ds
+from . import samlp
+from . import xmldsig as ds
 
 from .sigver import pre_signature_part
 
@@ -64,10 +64,10 @@ def do_organization_info(ava):
         return None
 
     org = md.Organization()
-    for dkey, (ckey, klass) in ORG_ATTR_TRANSL.items():
+    for dkey, (ckey, klass) in list(ORG_ATTR_TRANSL.items()):
         if ckey not in ava:
             continue
-        if isinstance(ava[ckey], basestring):
+        if isinstance(ava[ckey], str):
             setattr(org, dkey, [_localized_name(ava[ckey], klass)])
         elif isinstance(ava[ckey], list):
             setattr(org, dkey,
@@ -87,13 +87,13 @@ def do_contact_person_info(lava):
     contact_person = md.ContactPerson
     for ava in lava:
         cper = md.ContactPerson()
-        for (key, classpec) in contact_person.c_children.values():
+        for (key, classpec) in list(contact_person.c_children.values()):
             try:
                 value = ava[key]
                 data = []
                 if isinstance(classpec, list):
                     # What if value is not a list ?
-                    if isinstance(value, basestring):
+                    if isinstance(value, str):
                         data = [classpec[0](text=value)]
                     else:
                         for val in value:
@@ -103,7 +103,7 @@ def do_contact_person_info(lava):
                 setattr(cper, key, data)
             except KeyError:
                 pass
-        for (prop, classpec, _) in contact_person.c_attributes.values():
+        for (prop, classpec, _) in list(contact_person.c_attributes.values()):
             try:
                 # should do a check for valid value
                 setattr(cper, prop, ava[prop])
@@ -183,7 +183,7 @@ def do_uiinfo(_uiinfo):
 
         aclass = uii.child_class(attr)
         inst = getattr(uii, attr)
-        if isinstance(val, basestring):
+        if isinstance(val, str):
             ainst = aclass(text=val)
             inst.append(ainst)
         elif isinstance(val, dict):
@@ -193,7 +193,7 @@ def do_uiinfo(_uiinfo):
             inst.append(ainst)
         else:
             for value in val:
-                if isinstance(value, basestring):
+                if isinstance(value, str):
                     ainst = aclass(text=value)
                     inst.append(ainst)
                 elif isinstance(value, dict):
@@ -209,8 +209,8 @@ def do_uiinfo(_uiinfo):
         # dictionary or list of dictionaries
         if isinstance(val, dict):
             logo = mdui.Logo()
-            for attr, value in val.items():
-                if attr in logo.keys():
+            for attr, value in list(val.items()):
+                if attr in list(logo.keys()):
                     setattr(logo, attr, value)
             inst.append(logo)
         elif isinstance(val, list):
@@ -218,8 +218,8 @@ def do_uiinfo(_uiinfo):
                 if not isinstance(logga, dict):
                     raise Exception("Configuration error !!")
                 logo = mdui.Logo()
-                for attr, value in logga.items():
-                    if attr in logo.keys():
+                for attr, value in list(logga.items()):
+                    if attr in list(logo.keys()):
                         setattr(logo, attr, value)
                 inst.append(logo)
     except KeyError:
@@ -233,7 +233,7 @@ def do_uiinfo(_uiinfo):
         if isinstance(val, list):
             for value in val:
                 keyw = mdui.Keywords()
-                if isinstance(value, basestring):
+                if isinstance(value, str):
                     keyw.text = " ".join(value)
                 elif isinstance(value, dict):
                     keyw.text = " ".join(value["text"])
@@ -313,7 +313,7 @@ DEFAULT_BINDING = {
 def _do_nameid_format(cls, conf, typ):
     namef = conf.getattr("name_id_format", typ)
     if namef:
-        if isinstance(namef, basestring):
+        if isinstance(namef, str):
             ids = [md.NameIDFormat(namef)]
         else:
             ids = [md.NameIDFormat(text=form) for form in namef]
@@ -323,12 +323,12 @@ def _do_nameid_format(cls, conf, typ):
 def do_endpoints(conf, endpoints):
     service = {}
 
-    for endpoint, (eclass, indexed) in endpoints.items():
+    for endpoint, (eclass, indexed) in list(endpoints.items()):
         try:
             servs = []
             i = 1
             for args in conf[endpoint]:
-                if isinstance(args, basestring):  # Assume it's the location
+                if isinstance(args, str):  # Assume it's the location
                     args = {"location": args,
                             "binding": DEFAULT_BINDING[endpoint]}
                 elif isinstance(args, tuple):
@@ -360,15 +360,15 @@ def do_spsso_descriptor(conf, cert=None):
 
     endps = conf.getattr("endpoints", "sp")
     if endps:
-        for (endpoint, instlist) in do_endpoints(endps,
-                                                 ENDPOINTS["sp"]).items():
+        for (endpoint, instlist) in list(do_endpoints(endps,
+                                                 ENDPOINTS["sp"]).items()):
             setattr(spsso, endpoint, instlist)
 
     ext = do_endpoints(endps, ENDPOINT_EXT["sp"])
     if ext:
         if spsso.extensions is None:
             spsso.extensions = md.Extensions()
-        for vals in ext.values():
+        for vals in list(ext.values()):
             for val in vals:
                 spsso.extensions.add_extension_element(val)
 
@@ -434,8 +434,8 @@ def do_idpsso_descriptor(conf, cert=None):
 
     endps = conf.getattr("endpoints", "idp")
     if endps:
-        for (endpoint, instlist) in do_endpoints(endps,
-                                                 ENDPOINTS["idp"]).items():
+        for (endpoint, instlist) in list(do_endpoints(endps,
+                                                 ENDPOINTS["idp"]).items()):
             setattr(idpsso, endpoint, instlist)
 
     _do_nameid_format(idpsso, conf, "idp")
@@ -480,8 +480,8 @@ def do_aa_descriptor(conf, cert):
     endps = conf.getattr("endpoints", "aa")
 
     if endps:
-        for (endpoint, instlist) in do_endpoints(endps,
-                                                 ENDPOINTS["aa"]).items():
+        for (endpoint, instlist) in list(do_endpoints(endps,
+                                                 ENDPOINTS["aa"]).items()):
             setattr(aad, endpoint, instlist)
 
     _do_nameid_format(aad, conf, "aa")
@@ -499,8 +499,8 @@ def do_aq_descriptor(conf, cert):
     endps = conf.getattr("endpoints", "aq")
 
     if endps:
-        for (endpoint, instlist) in do_endpoints(endps,
-                                                 ENDPOINTS["aq"]).items():
+        for (endpoint, instlist) in list(do_endpoints(endps,
+                                                 ENDPOINTS["aq"]).items()):
             setattr(aqs, endpoint, instlist)
 
     _do_nameid_format(aqs, conf, "aq")
@@ -520,8 +520,8 @@ def do_pdp_descriptor(conf, cert):
     endps = conf.getattr("endpoints", "pdp")
 
     if endps:
-        for (endpoint, instlist) in do_endpoints(endps,
-                                                 ENDPOINTS["pdp"]).items():
+        for (endpoint, instlist) in list(do_endpoints(endps,
+                                                 ENDPOINTS["pdp"]).items()):
             setattr(pdp, endpoint, instlist)
 
     _do_nameid_format(pdp, conf, "pdp")

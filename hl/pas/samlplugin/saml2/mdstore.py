@@ -9,7 +9,7 @@ from .extension.idpdisc import DiscoveryResponse
 
 from .mdie import to_dict
 
-import md, samlp
+from . import md, samlp
 from hl.pas.samlplugin.saml2 import BINDING_HTTP_REDIRECT
 from hl.pas.samlplugin.saml2 import BINDING_HTTP_POST
 from hl.pas.samlplugin.saml2 import BINDING_SOAP
@@ -102,13 +102,13 @@ class MetaData(object):
         self.metadata = metadata
 
     def items(self):
-        return self.entity.items()
+        return list(self.entity.items())
 
     def keys(self):
-        return self.entity.keys()
+        return list(self.entity.keys())
 
     def values(self):
-        return self.entity.values()
+        return list(self.entity.values())
 
     def __contains__(self, item):
         return item in self.entity
@@ -127,9 +127,8 @@ class MetaData(object):
 
         # have I seen this entity_id before ? If so if log: ignore it
         if entity_descr.entity_id in self.entity:
-            print >> sys.stderr,\
-                "Duplicated Entity descriptor (entity id: '%s')" %\
-                entity_descr.entity_id
+            print("Duplicated Entity descriptor (entity id: '%s')" %\
+                entity_descr.entity_id, file=sys.stderr)
             return
 
         _ent = to_dict(entity_descr, self.onts)
@@ -171,8 +170,8 @@ class MetaData(object):
         else:
             try:
                 valid_instance(self.entities_descr)
-            except NotValid, exc:
-                logger.error(exc.args[0])
+            except NotValid:
+                # logger.error(exc.args[0])
                 return
 
             try:
@@ -257,7 +256,7 @@ class MetaData(object):
         :return:
         """
         res = {}
-        for ent in self.keys():
+        for ent in list(self.keys()):
             bind = self._service(ent, typ, service, binding)
             if bind:
                 res[ent] = bind
@@ -297,22 +296,22 @@ class MetaData(object):
         return res
 
     def dumps(self):
-        return json.dumps(self.items(), indent=2)
+        return json.dumps(list(self.items()), indent=2)
 
     def with_descriptor(self, descriptor):
         res = {}
         desc = "%s_descriptor" % descriptor
-        for eid, ent in self.items():
+        for eid, ent in list(self.items()):
             if desc in ent:
                 res[eid] = ent
         return res
 
     def __str__(self):
-        return "%s" % self.items()
+        return "%s" % list(self.items())
 
     def construct_source_id(self):
         res = {}
-        for eid, ent in self.items():
+        for eid, ent in list(self.items()):
             for desc in ["spsso_descriptor", "idpsso_descriptor"]:
                 try:
                     for srv in ent[desc]:
@@ -444,7 +443,7 @@ class MetadataStore(object):
         self.metadata[key] = md
 
     def imp(self, spec):
-        for key, vals in spec.items():
+        for key, vals in list(spec.items()):
             for val in vals:
                 if isinstance(val, dict):
                     self.load(key, **val)
@@ -453,7 +452,7 @@ class MetadataStore(object):
 
     def _service(self, entity_id, typ, service, binding=None):
         known_principal = False
-        for key, md in self.metadata.items():
+        for key, md in list(self.metadata.items()):
             srvs = md._service(entity_id, typ, service, binding)
             if srvs:
                 return srvs
@@ -469,7 +468,7 @@ class MetadataStore(object):
 
     def _ext_service(self, entity_id, typ, service, binding=None):
         known_principal = False
-        for key, md in self.metadata.items():
+        for key, md in list(self.metadata.items()):
             srvs = md._ext_service(entity_id, typ, service, binding)
             if srvs:
                 return srvs
@@ -576,18 +575,18 @@ class MetadataStore(object):
                                  binding)
 
     def attribute_requirement(self, entity_id, index=0):
-        for md in self.metadata.values():
+        for md in list(self.metadata.values()):
             if entity_id in md:
                 return md.attribute_requirement(entity_id, index)
 
     def keys(self):
         res = []
-        for md in self.metadata.values():
-            res.extend(md.keys())
+        for md in list(self.metadata.values()):
+            res.extend(list(md.keys()))
         return res
 
     def __getitem__(self, item):
-        for md in self.metadata.values():
+        for md in list(self.metadata.values()):
             try:
                 return md[item]
             except KeyError:
@@ -600,8 +599,8 @@ class MetadataStore(object):
 
     def entities(self):
         num = 0
-        for md in self.metadata.values():
-            num += len(md.items())
+        for md in list(self.metadata.values()):
+            num += len(list(md.items()))
 
         return num
 
@@ -610,13 +609,13 @@ class MetadataStore(object):
 
     def with_descriptor(self, descriptor):
         res = {}
-        for md in self.metadata.values():
+        for md in list(self.metadata.values()):
             res.update(md.with_descriptor(descriptor))
         return res
 
     def name(self, entity_id, langpref="en"):
-        for md in self.metadata.values():
-            if entity_id in md.items():
+        for md in list(self.metadata.values()):
+            if entity_id in list(md.items()):
                 return name(md[entity_id], langpref)
         return None
 
@@ -675,27 +674,27 @@ class MetadataStore(object):
         return res
 
     def bindings(self, entity_id, typ, service):
-        for md in self.metadata.values():
-            if entity_id in md.items():
+        for md in list(self.metadata.values()):
+            if entity_id in list(md.items()):
                 return md.bindings(entity_id, typ, service)
 
         return None
 
     def __str__(self):
         _str = ["{"]
-        for key, val in self.metadata.items():
+        for key, val in list(self.metadata.items()):
             _str.append("%s: %s" % (key, val))
         _str.append("}")
         return "\n".join(_str)
 
     def construct_source_id(self):
         res = {}
-        for md in self.metadata.values():
+        for md in list(self.metadata.values()):
             res.update(md.construct_source_id())
         return res
 
     def items(self):
         res = {}
-        for md in self.metadata.values():
-            res.update(md.items())
-        return res.items()
+        for md in list(self.metadata.values()):
+            res.update(list(md.items()))
+        return list(res.items())

@@ -17,8 +17,8 @@ if sys.version_info >= (2, 5):
 else:  # before python 2.5
     import sha
 
-import saml
-import samlp
+from . import saml
+from . import samlp
 from hl.pas.samlplugin.saml2 import VERSION
 from .time_util import instant
 
@@ -252,7 +252,7 @@ def status_message_factory(message, code, fro=samlp.STATUS_RESPONDER):
 def assertion_factory(**kwargs):
     assertion = saml.Assertion(version=VERSION, id=sid(),
                                issue_instant=instant())
-    for key, val in kwargs.items():
+    for key, val in list(kwargs.items()):
         setattr(assertion, key, val)
     return assertion
 
@@ -278,7 +278,7 @@ def _attrval(val, typ=""):
 
 
 def do_ava(val, typ=""):
-    if isinstance(val, basestring):
+    if isinstance(val, str):
         ava = saml.AttributeValue()
         ava.set_text(val)
         attrval = [ava]
@@ -306,7 +306,7 @@ def do_attribute(val, typ, key):
     if attrval:
         attr.attribute_value = attrval
 
-    if isinstance(key, basestring):
+    if isinstance(key, str):
         attr.name = key
     elif isinstance(key, tuple):  # 3-tuple or 2-tuple
         try:
@@ -327,7 +327,7 @@ def do_attributes(identity):
     attrs = []
     if not identity:
         return attrs
-    for key, spec in identity.items():
+    for key, spec in list(identity.items()):
         try:
             val, typ = spec
         except ValueError:
@@ -352,7 +352,7 @@ def do_attribute_statement(identity):
 
 def factory(klass, **kwargs):
     instance = klass()
-    for key, val in kwargs.items():
+    for key, val in list(kwargs.items()):
         setattr(instance, key, val)
     return instance
 
@@ -419,20 +419,14 @@ def dynamic_importer(name, class_name=None):
     try:
         fp, pathname, description = imp.find_module(name)
     except ImportError:
-        print "unable to locate module: " + name
+        print(("unable to locate module: " + name))
         return None, None
 
-    try:
-        package = imp.load_module(name, fp, pathname, description)
-    except Exception, e:
-        raise
+    package = imp.load_module(name, fp, pathname, description)
 
     if class_name:
-        try:
-            _class = imp.load_module("%s.%s" % (name, class_name), fp,
-                                      pathname, description)
-        except Exception, e:
-            raise
+        _class = imp.load_module("%s.%s" % (
+            name, class_name), fp, pathname, description)
 
         return package, _class
     else:

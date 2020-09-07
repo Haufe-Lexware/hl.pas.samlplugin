@@ -1,7 +1,7 @@
 import logging
-from urllib import urlencode
-from urlparse import parse_qs
-from urlparse import urlsplit
+from urllib.parse import urlencode
+from urllib.parse import parse_qs
+from urllib.parse import urlsplit
 import time
 from saml2.cipher import AES
 from saml2.httputil import Response
@@ -37,7 +37,7 @@ def url_encode_params(params=None):
     if not isinstance(params, dict):
         raise Exception("You must pass in a dictionary!")
     params_list = []
-    for k, v in params.items():
+    for k, v in list(params.items()):
         if isinstance(v, list):
             params_list.extend([(k, x) for x in v])
         else:
@@ -59,18 +59,18 @@ def create_return_url(base, query, **kwargs):
     if part.fragment:
         raise ValueError("Base URL contained parts it shouldn't")
 
-    for key, values in parse_qs(query).items():
+    for key, values in list(parse_qs(query).items()):
         if key in kwargs:
-            if isinstance(kwargs[key], basestring):
+            if isinstance(kwargs[key], str):
                 kwargs[key] = [kwargs[key]]
             kwargs[key].extend(values)
         else:
             kwargs[key] = values
 
     if part.query:
-        for key, values in parse_qs(part.query).items():
+        for key, values in list(parse_qs(part.query).items()):
             if key in kwargs:
-                if isinstance(kwargs[key], basestring):
+                if isinstance(kwargs[key], str):
                     kwargs[key] = [kwargs[key]]
                 kwargs[key].extend(values)
             else:
@@ -141,7 +141,7 @@ class UsernamePasswordMako(UserAuthnMethod):
         """
 
         logger.debug("verify(%s)" % request)
-        if isinstance(request, basestring):
+        if isinstance(request, str):
             _dict = parse_qs(request)
         elif isinstance(request, dict):
             _dict = request

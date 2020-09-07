@@ -55,7 +55,7 @@ class Cache(object):
                     oldees.append(item["entity_id"])
                     continue
 
-                for key, vals in info["ava"].items():
+                for key, vals in list(info["ava"].items()):
                     try:
                         tmp = set(res[key]).union(set(vals))
                         res[key] = list(tmp)
@@ -70,7 +70,7 @@ class Cache(object):
                     oldees.append(entity_id)
                     continue
 
-                for key, vals in info["ava"].items():
+                for key, vals in list(info["ava"].items()):
                     try:
                         tmp = set(res[key]).union(set(vals))
                         res[key] = list(tmp)

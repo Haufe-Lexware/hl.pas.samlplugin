@@ -23,10 +23,10 @@ Bindings normally consists of three parts:
 - how to package the information
 - which protocol to use
 """
-import urlparse
+import urllib.parse as urlparse
 from hl.pas.samlplugin.saml2 import create_class_from_element_tree, BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
 import base64
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from .s_utils import deflate_and_base64_encode
 from .s_utils import Unsupported
 import logging
@@ -71,7 +71,7 @@ def http_form_post_message(message, location, relay_state="",
     """
     response = ["<head>", """<title>SAML 2.0 POST</title>""", "</head><body>"]
 
-    if not isinstance(message, basestring):
+    if not isinstance(message, str):
         message = "%s" % (message,)
 
     if typ == "SAMLRequest" or typ == "SAMLResponse":
@@ -108,7 +108,7 @@ def http_redirect_message(message, location, relay_state="", typ="SAMLRequest",
     :return: A tuple containing header information and a HTML message.
     """
     
-    if not isinstance(message, basestring):
+    if not isinstance(message, str):
         message = "%s" % (message,)
 
     _order = None
@@ -135,13 +135,13 @@ def http_redirect_message(message, location, relay_state="", typ="SAMLRequest",
 
         if sigalg == RSA_SHA1:
             signer = RSASigner(sha1_digest, "sha1")
-            string = "&".join([urllib.urlencode({k: args[k]}) for k in _order])
+            string = "&".join([urllib.parse.urlencode({k: args[k]}) for k in _order])
             args["Signature"] = base64.b64encode(signer.sign(string, key))
-            string = urllib.urlencode(args)
+            string = urllib.parse.urlencode(args)
         else:
             raise Unsupported("Signing algorithm")
     else:
-        string = urllib.urlencode(args)
+        string = urllib.parse.urlencode(args)
 
     glue_char = "&" if urlparse.urlparse(location).query else "?"
     login_url = glue_char.join([location, string])
@@ -177,7 +177,7 @@ def make_soap_enveloped_saml_thingy(thingy, header_parts=None):
     body.tag = '{%s}Body' % NAMESPACE
     envelope.append(body)
 
-    if isinstance(thingy, basestring):
+    if isinstance(thingy, str):
         # remove the first XML version/encoding line
         logger.debug("thingy0: %s" % thingy)
         _part = thingy.split("\n")

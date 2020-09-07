@@ -3,8 +3,8 @@ import shelve
 import logging
 
 from hashlib import sha256
-from urllib import quote
-from urllib import unquote
+from urllib.parse import quote
+from urllib.parse import unquote
 from .s_utils import rndstr
 from .s_utils import PolicyError
 from .saml import NameID
@@ -48,7 +48,7 @@ class IdentDB(object):
      Keeps a list of all nameIDs returned per SP
     """
     def __init__(self, db, domain="", name_qualifier=""):
-        if isinstance(db, basestring):
+        if isinstance(db, str):
             self.db = shelve.open(db)
         else:
             self.db = db
@@ -71,7 +71,7 @@ class IdentDB(object):
         return _id
 
     def store(self, ident, name_id):
-        if isinstance(ident, unicode):
+        if isinstance(ident, str):
             ident = ident.encode("utf-8")
 
         try:
@@ -97,7 +97,7 @@ class IdentDB(object):
         del self.db[_cn]
 
     def remove_local(self, sid):
-        if isinstance(sid, unicode):
+        if isinstance(sid, str):
             sid = sid.encode("utf-8")
 
         try:
@@ -135,7 +135,7 @@ class IdentDB(object):
         for val in _vals.split(" "):
             nid = decode(val)
             if kwargs:
-                for key, val in kwargs.items():
+                for key, val in list(kwargs.items()):
                     if getattr(nid, key, None) != val:
                         break
                 else:
@@ -221,7 +221,7 @@ class IdentDB(object):
             return self.db[code(name_id)]
         except KeyError:
             logger.debug("name: %s" % code(name_id))
-            logger.debug("id keys: %s" % self.db.keys())
+            logger.debug("id keys: %s" % list(self.db.keys()))
             return None
 
     def match_local_id(self, userid, sp_name_qualifier, name_qualifier):

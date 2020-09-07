@@ -18,11 +18,11 @@ class PropertiesTests(SAMLPluginTestsBase):
         session[plugin.session_user_properties] = expected
         session.set(plugin.session_login_key, uid)
         got = plugin.getPropertiesForUser(UserMock(uid), req)
-        self.failUnless(expected==got, 'Expected %s, got %s instead' % (expected, got))
+        self.assertTrue(expected==got, 'Expected %s, got %s instead' % (expected, got))
         # request might be None, then the plugin uses acquisition
         plugin.REQUEST = req
         got = plugin.getPropertiesForUser(UserMock(uid))
-        self.failUnless(expected==got, 'Expected %s, got %s instead' % (expected, got))
+        self.assertTrue(expected==got, 'Expected %s, got %s instead' % (expected, got))
 
     def test_properties_of_other_user(self):
         """
@@ -37,7 +37,7 @@ class PropertiesTests(SAMLPluginTestsBase):
         session[plugin.session_user_properties] = userdata
         session.set(plugin.session_login_key, uid)
         got = plugin.getPropertiesForUser(UserMock('bar'), req)
-        self.failUnless(expected==got, 'Expected %s, got %s instead' % (expected, got))
+        self.assertTrue(expected==got, 'Expected %s, got %s instead' % (expected, got))
 
     def test_properties_no_saml_sessiondata(self):
         """
@@ -49,14 +49,14 @@ class PropertiesTests(SAMLPluginTestsBase):
         uid = 'foo'
         expected = {}
         got = plugin.getPropertiesForUser(UserMock(uid), req)
-        self.failUnless(expected==got, 'Expected %s, got %s instead' % (expected, got))
+        self.assertTrue(expected==got, 'Expected %s, got %s instead' % (expected, got))
 
     def test_interfaces(self):
         """
         interface implementations
         """
         plugin = self._make_one()
-        self.assert_(verifyObject(IPropertiesPlugin, plugin))
+        self.assertTrue(verifyObject(IPropertiesPlugin, plugin))
 
 def test_suite():
     return unittest.TestSuite((
