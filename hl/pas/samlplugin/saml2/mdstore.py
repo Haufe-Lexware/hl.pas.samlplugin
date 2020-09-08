@@ -316,7 +316,7 @@ class MetaData(object):
                 try:
                     for srv in ent[desc]:
                         if "artifact_resolution_service" in srv:
-                            s = sha1(eid)
+                            s = sha1(eid.encode('utf-8'))
                             res[s.digest()] = ent
                 except KeyError:
                     pass
