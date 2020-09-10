@@ -466,7 +466,7 @@ def parse_xmlsec_output(output):
     :param output: The output from Popen
     :return: A boolean; True if the command was a success otherwise False
     """
-    for line in output.split("\n"):
+    for line in output.decode('utf-8').split("\n"):
         if line == "OK":
             return True
         elif line == "FAIL":
@@ -957,7 +957,6 @@ class SecurityContext(object):
 
         if not id_attr:
             id_attr = ID_ATTR
-
         return self.crypto.validate_signature(signedtext, cert_file=cert_file,
                                               cert_type=cert_type,
                                               node_name=node_name,
@@ -981,7 +980,7 @@ class SecurityContext(object):
             certs = []
             for cert in _certs:
                 if isinstance(cert, str):
-                    certs.append(make_temp(pem_format(cert), ".pem", False))
+                    certs.append(make_temp(pem_format(cert).encode('utf-8'), ".pem", False))
                 else:
                     certs.append(cert)
         else:
@@ -989,7 +988,7 @@ class SecurityContext(object):
 
         if not certs and not self.only_use_keys_in_metadata:
             logger.debug("==== Certs from instance ====")
-            certs = [make_temp(pem_format(cert), ".pem",
+            certs = [make_temp(pem_format(cert).encode('utf-8'), ".pem",
                                False) for cert in cert_from_instance(item)]
         else:
             logger.debug("==== Certs from metadata ==== %s: %s ====" % (issuer,

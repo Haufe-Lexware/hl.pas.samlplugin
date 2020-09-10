@@ -92,7 +92,7 @@ class Saml2Client(BaseClient):
         request.name_id_policy = name_id_policy
         request.issuer = self._issuer(spentityid)
 
-        logger.info("REQUEST: %s" % request)
+        logger.info("REQUEST: {}".format(request))
 
         return signed_instance_factory(request, self.sec, to_sign)
 

@@ -147,7 +147,7 @@ def deflate_and_base64_encode(string_val):
     :param string_val: The string to deflate and encode
     :return: The deflated and encoded string
     """
-    return base64.b64encode(zlib.compress(string_val)[2:-4])
+    return base64.b64encode(zlib.compress(string_val.encode('utf-8'))[2:-4])
 
 
 def rndstr(size=16):
@@ -171,7 +171,7 @@ def sid(seed=""):
         compliant with the NCName specification
     """
     ident = md5()
-    ident.update(repr(time.time()))
+    ident.update(repr(time.time()).encode('utf-8'))
     if seed:
         ident.update(seed)
     return "id-" + ident.hexdigest()

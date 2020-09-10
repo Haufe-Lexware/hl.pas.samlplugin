@@ -591,7 +591,7 @@ class AuthnResponse(StatusResponse):
         validate_before(data.not_before, self.timeslack)
 
         # not_before must be < not_on_or_after
-        if not later_than(data.not_on_or_after, data.not_before):
+        if (data.not_before is not None) and not later_than(data.not_on_or_after, data.not_before):
             return False
 
         if self.asynchop and not self.came_from:

@@ -556,7 +556,7 @@ class SamlBase(ExtensionContainer):
         return ElementTree.tostring(self._to_element_tree(), encoding="UTF-8")
 
     def __str__(self):
-        return self.to_string()
+        return self.to_string().decode('utf-8')
 
     def keyswv(self):
         """ Return the keys of attributes or children that has values
