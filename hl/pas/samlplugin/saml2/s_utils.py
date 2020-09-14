@@ -173,7 +173,7 @@ def sid(seed=""):
     ident = md5()
     ident.update(repr(time.time()).encode('utf-8'))
     if seed:
-        ident.update(seed)
+        ident.update(seed.encode('utf-8'))
     return "id-" + ident.hexdigest()
 
 
@@ -361,7 +361,7 @@ def signature(secret, parts):
     """Generates a signature.
     """
     if sys.version_info >= (2, 5):
-        csum = hmac.new(secret, digestmod=hashlib.sha1)
+        csum = hmac.new(secret.decode('utf-8'), digestmod=hashlib.sha1)
     else:
         csum = hmac.new(secret, digestmod=sha)
 

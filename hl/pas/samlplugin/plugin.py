@@ -172,7 +172,7 @@ class SAML2Plugin(BasePlugin):
         login = ava[self.saml2_login_attribute.lower()][0] # whats in 'login' is controlled by the saml2_login_attribute property
         creds['login'] = login
         creds['ssiauth'] = True
-        session.set(self.session_user_properties, PersistentMapping(dict([(key, ava[key.lower()][0]) for key in self.saml2_user_properties])))
+        session.set(self.session_user_properties, PersistentMapping(dict([(key, ava[key.decode('utf-8').lower()][0]) for key in self.saml2_user_properties])))
         session.set(self.session_login_key, login)
         # store relevant information for Single Logout in session
         session.set(self.session_samluid_key, session_info.assertion.subject.name_id.text)
