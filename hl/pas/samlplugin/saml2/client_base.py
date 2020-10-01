@@ -137,7 +137,7 @@ class Base(Entity):
     def _relay_state(self, session_id):
         vals = [session_id, str(int(time.time()))]
         if self.config.secret is None:
-            vals.append(signature("", vals))
+            vals.append(signature(b'', vals))
         else:
             vals.append(signature(self.config.secret, vals))
         return "|".join(vals)

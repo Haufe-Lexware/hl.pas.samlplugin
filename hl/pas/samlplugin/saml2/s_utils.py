@@ -361,12 +361,12 @@ def signature(secret, parts):
     """Generates a signature.
     """
     if sys.version_info >= (2, 5):
-        csum = hmac.new(secret.decode('utf-8'), digestmod=hashlib.sha1)
+        csum = hmac.new(secret, digestmod=hashlib.sha1)
     else:
         csum = hmac.new(secret, digestmod=sha)
 
     for part in parts:
-        csum.update(part)
+        csum.update(part.encode('utf-8'))
 
     return csum.hexdigest()
 
