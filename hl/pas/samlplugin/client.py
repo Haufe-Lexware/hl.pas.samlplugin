@@ -227,8 +227,7 @@ class Saml2Client(BaseClient):
                                                         request.issuer.text,
                                                         request.id,
                                                         status)
-
-            logger.info("RESPONSE: {0:>s}".format(response))
+            logger.info("RESPONSE: {}".format(response))
 
             if 'RelayState' in get:
                 rstate = get['RelayState']
