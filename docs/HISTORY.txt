@@ -1,8 +1,10 @@
 Changelog
 =========
 
-1.4dev (unreleased)
+2.0.dev0 (unreleased)
 -------------------
+
+- Use Python 3 and Zope 4.5
 
 1.3 (2015-03-02)
 ----------------
