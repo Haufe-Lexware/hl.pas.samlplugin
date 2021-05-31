@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 def read(*rnames):
     return open(os.path.join(os.path.dirname(__file__), *rnames)).read()
 
-version = '1.4dev'
+version = '2.0.dev0'
 
 long_description = (
     read('README.rst')
@@ -48,7 +48,7 @@ setup(name='hl.pas.samlplugin',
                         'zope.app.container',
                         'Products.PluggableAuthService',
                         'requests',
-                        'M2Crypto',
+                        'pysaml2',
                         ],
       tests_require=tests_require,
       extras_require=dict(tests=tests_require),

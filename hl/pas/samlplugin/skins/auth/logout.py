@@ -19,7 +19,7 @@ else:
     redir = u.slo(request)
     return request.response.redirect(redir)
 
-if request.has_key('portal_skin'):
+if 'portal_skin' in request:
    context.portal_skins.clearSkinCookie()
 request.RESPONSE.expireCookie('__ac', path='/')
 return request.RESPONSE.redirect(request.URL1+'/logged_out')
