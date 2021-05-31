@@ -155,6 +155,7 @@ class SAML2Plugin(BasePlugin):
                     "optional_attributes": [],
                     "privacy_notice": "",
                     "allow_unsolicited": True,
+                    "want_response_signed": False,
                 }
             },
             "metadata": {
