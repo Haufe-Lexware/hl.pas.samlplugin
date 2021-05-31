@@ -1,8 +1,9 @@
-from UserDict import UserDict
+from collections import UserDict
+
 
 class SessionMock(UserDict):
 
-    id = 'dummy'
+    id = "dummy"
 
     def set(self, k, v):
         self[k] = v
@@ -14,21 +15,22 @@ class SessionMock(UserDict):
 
     delete = UserDict.__delitem__
 
+
 class ResponseMock(object):
 
     shared_state = {}
-    text = ''
-    encoding = 'utf-8'
+    text = ""
+    encoding = "utf-8"
 
     def __init__(self, status, request, method=None, **kwargs):
         self.__dict__ = self.shared_state
         self.code = self.status_code = status
-        self.request = request 
+        self.request = request
         self.method = method
         self.kwargs = kwargs
 
-class UserMock(object):
 
+class UserMock(object):
     def __init__(self, id):
         self.id = id
 
