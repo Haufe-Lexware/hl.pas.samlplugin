@@ -1,8 +1,8 @@
 Introduction
 ============
 
-.. image:: https://secure.travis-ci.org/Haufe-Lexware/hl.pas.samlplugin.png
-    :target: http://travis-ci.org/Haufe-Lexware/hl.pas.samlplugin
+
+.. image:: https://github.com/Haufe-Lexware/hl.pas.samlplugin/actions/workflows/ci.yml/badge.svg
 
 .. image:: https://pypip.in/v/hl.pas.samlplugin/badge.png
     :target: https://pypi.python.org/pypi/hl.pas.samlplugin/
