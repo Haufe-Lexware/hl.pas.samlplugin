@@ -4,7 +4,7 @@ Introduction
 
 .. image:: https://github.com/Haufe-Lexware/hl.pas.samlplugin/actions/workflows/ci.yml/badge.svg
 
-.. image:: https://pypip.in/v/hl.pas.samlplugin/badge.png
+.. image:: https://img.shields.io/pypi/v/hl.pas.samlplugin.svg
     :target: https://pypi.python.org/pypi/hl.pas.samlplugin/
     :alt: Latest Version
 
