@@ -17,7 +17,7 @@ jobs:
         run: |
           sudo apt-get -y install swig xmlsec1
       - name: pip install
-        run: pip install setuptools zc.buildout==2.13.4
+        run: pip install zc.buildout==3.0.1
       - name: buildout
         run: buildout -N -t 10 -c ci.cfg
       - name: Run tests
