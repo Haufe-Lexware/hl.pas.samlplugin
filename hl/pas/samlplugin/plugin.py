@@ -5,7 +5,7 @@ from urllib.parse import quote
 from io import BytesIO
 from AccessControl.SecurityInfo import ClassSecurityInfo
 from Persistence import PersistentMapping
-from App.class_init import default__class_init__ as InitializeClass
+from AccessControl.class_init import default__class_init__ as InitializeClass
 from AccessControl.Permissions import view
 from ZTUtils import make_query
 from zope.component import adapter
